@@ -10,5 +10,5 @@ Hydra Reference Diagram
 Workshop data are in ```/data/genomics/workshops/smsc_2024/```
 
 We will be using a few data sources to learn how to use many different software packages for conservation genomics:
-  - PacBio, Hi-C data, and Illumina from a new clouded leopard (Guam rail (_Hypotaenidia owstoni_)
-  - Illumina short-read data from 4 additional Guam Rail individuals (all Guam rail (_Hypotaenidia owstoni_).
+  - PacBio, Hi-C data, and Illumina from a Guam rail (_Hypotaenidia owstoni_)
+  - Illumina short-read data from 3 Guam Rail individuals (all Guam rail (_Hypotaenidia owstoni_).
