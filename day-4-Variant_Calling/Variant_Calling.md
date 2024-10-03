@@ -22,7 +22,7 @@ cd /scratch/genomics/your_username/
 mkdir pop_genomics
 ```
 
-Next, we will change directories to the pop_genommics folder and we will create a several folders that we will use today and tomorrow. Here's the list of folders:
+Next, we will change directories to the pop_genomics folder and we will create a several folders that we will use today and tomorrow. Here's the list of folders:
 
 - variant_calling
 - pop_structure
