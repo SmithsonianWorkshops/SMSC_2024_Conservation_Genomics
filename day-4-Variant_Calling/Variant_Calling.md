@@ -129,7 +129,10 @@ module load bio/gatk/4.5.0.0
 BAM=/data/genomics/workshops/smsc_2024/BAMS/Fulica_atra.realigned.bam                                                                            
 OUTBAM=/scratch/genomics/hennellyl/variant_calling/BAMS_prep/Fulica_atra.realigned_duplMarked.bam                                                
 
-rungatk MarkDuplicates \                                                                                                                            -I ${BAM} \                                                                                                                                         -O ${OUTBAM} \                                                                                                                                      -M marked_dup_metrics.txt                                                                                                                           echo = `date` job $JOB_NAME done                                                                                                                      
+rungatk MarkDuplicates \
+-I ${BAM} \
+-O ${OUTBAM} \
+-M marked_dup_metrics.txt                                                                                                                           echo = `date` job $JOB_NAME done                                                                                                                      
 ```
 
 ##### Explanation:
