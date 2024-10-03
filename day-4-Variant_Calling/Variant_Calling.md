@@ -95,6 +95,13 @@ sort: sort command
 
 Note! this step is quite time-consuming. I have run this for you before so we do not have to wait 3-5 hours to complete each of seven mappings. I have created a folder from where you can call all the BAM files `/data/genomics/workshops/smsc_2024/BAMS`
 
+## Check the bamfiles 
+To see the structure of the bam file, you can do in the terminal: 
+```
+module load bio/samtools/1.9
+cd /data/genomics/workshops/smsc_2024/BAMS/
+samtools view Fulica_atra.realigned.bam | less
+```
 
 ### The Genome Analysis Toolkit (GATK)
 
@@ -114,12 +121,15 @@ Potential PCR duplicates need to be marked. Marking duplicates make sense even i
 - Memory: 10G (10G per CPU, 50G total)
 - Module: 
 ```
-  module load bio/gatk/4.5.0.0 
+module load bio/gatk/4.5.0.0 
 ```
 - Commands:
 
 ```
-rungatk MarkDuplicates -I=NN114296_cloud_leopard_sorted.bam -O=NN114296_sorted_reads_duplMarked.bam -M=sorted_reads_duplMarked.metrics
+BAM=/data/genomics/workshops/smsc_2024/BAMS/Fulica_atra.realigned.bam                                                                            
+OUTBAM=/scratch/genomics/hennellyl/variant_calling/BAMS_prep/Fulica_atra.realigned_duplMarked.bam                                                
+
+rungatk MarkDuplicates \                                                                                                                            -I ${BAM} \                                                                                                                                         -O ${OUTBAM} \                                                                                                                                      -M marked_dup_metrics.txt                                                                                                                           echo = `date` job $JOB_NAME done                                                                                                                      
 ```
 
 ##### Explanation:
@@ -141,12 +151,22 @@ The GATK requires read group information in BAM files. It is used to differentia
 - Memory: 10G (10G per CPU, 50G total)
 - Module: 
 ```
-  module load bio/gatk/4.1.3.0 
+module load bio/gatk/4.5.0.0 
 ```
 - Commands:
 
 ```
-rungatk AddOrReplaceReadGroups -I=NN114296_sorted_reads_duplMarked.bam -O=NN114296_sorted_reads_duplMarked_SM.bam -ID=1 -LB=lib1 -PL=ILLUMINA -PU=unit1 -SM=NN114296
+BAMdup=/scratch/genomics/hennellyl/variant_calling/BAMS_prep/Fulica_atra.realigned_duplMarked.bam                                                
+OUTBAM=/scratch/genomics/hennellyl/variant_calling/BAMS_prep/Fulica_atra.realigned_duplMarked_SM.bam                                                
+
+rungatk AddOrReplaceReadGroups \
+-I ${BAMdup} \
+-O ${OUTBAM} \
+-ID=1 \
+-LB=lib1 \
+-PL=ILLUMINA \
+-PU=unit1 \
+-SM=Fulica_atra
 ```
 
 ##### Explanation:
@@ -166,13 +186,16 @@ rungatk AddOrReplaceReadGroups -I=NN114296_sorted_reads_duplMarked.bam -O=NN1142
 First we will copy our reference to our variant calling folder and then we will run CreateSequenceDictionary and to run samtools, which will create two different files with indexing information for our refence genome.
 
 ```
-cp /data/genomics/workshops/smsc_2023/clouded_leopard_pacbio/mNeoNeb1.pri.cur.20220520.fasta .
-qrsh
+cp /data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz /scratch/genomics/hennellyl/variant_calling/bHypOws1_hifiasm.bp.p_ctg_c
+opy.fasta.gz
+gunzip /scratch/genomics/hennellyl/variant_calling/bHypOws1_hifiasm.bp.p_ctg_copy.fasta.gz
+
 module load bio/gatk/4.1.3.0
 module load bio/samtools/1.9
-rungatk CreateSequenceDictionary -R=mNeoNeb1.pri.cur.20220520.fasta -O=mNeoNeb1.pri.cur.20220520.dict
-samtools faidx mNeoNeb1.pri.cur.20220520.fasta
-samtools index NN114296_sorted_reads_duplMarked_SM.bam
+
+rungatk CreateSequenceDictionary -R /scratch/genomics/hennellyl/variant_calling/bHypOws1_hifiasm.bp.p_ctg_copy.fasta -O /scratch/genomics/hennellyl/variant_calling/bHypOws1_hifiasm.bp.p_ctg_copy.dict
+samtools faidx /scratch/genomics/hennellyl/variant_calling/bHypOws1_hifiasm.bp.p_ctg_copy.fasta                                                                    
+samtools index /scratch/genomics/hennellyl/variant_calling/BAMS_prep/Atlantisia_rogersi.realigned_duplMarked_SM.bam                                                
 ```
 ##### Explanation:
 
@@ -208,7 +231,14 @@ HaplotypeCaller is the focal tool within GATK4 to simultaneously call germline S
 - Commands:
 
 ```
-rungatk HaplotypeCaller -I NN114296_sorted_reads_duplMarked_SM.bam -R mNeoNeb1.pri.cur.20220520.fasta -ERC GVCF -O NN114296.g.vcf.gz
+BAM1=/scratch/genomics/hennellyl/variant_calling/BAMS_prep/Fulica_atra.realigned_duplMarked_SM.bam  
+REF=/scratch/genomics/hennellyl/variant_calling/bHypOws1_hifiasm.bp.p_ctg_copy.fasta
+
+rungatk HaplotypeCaller \
+-I ${BAM1} \
+-R ${REF} \
+-ERC GVCF \
+-O /scratch/genomics/hennellyl/variant_calling/GVCFs/Fulica_atra.realigned_duplMarked_SM 
 
 ```
 
