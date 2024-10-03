@@ -53,9 +53,9 @@ If we follow this folder structure, we will have all the results organized by so
 **Submitting jobs**: With this folder structure, we will save all the job files with each program folder and the job files will be submitted from there.   
 
 ### Input files
-For this session, we will use the reference cloud leopard assembly. You can find this file here: `/data/genomics/workshops/smsc_2023/clouded_leopard_pacbio/mNeoNeb1.pri.cur.20220520.fasta`
+For this session, we will use the reference cloud leopard assembly. You can find this file here: `/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz`
 
-We will also need the Illumina data (fastq) for our 7 Clouded Leopard individuals this will represent our population. Remember that the data are locted here: `/data/genomics/workshops/smsc_2023/clouded_leopard_illumina`
+We will also need the Illumina data (fastq) for our 7 Clouded Leopard individuals this will represent our population. Remember that the data are locted here: `//data/genomics/workshops/smsc_2024/rawdata`
 
 
 ### Map to the reference genome
@@ -93,12 +93,14 @@ sort: sort command
 -o: name of the outputformat
 ```
 
-Note! this step is quite time-consuming. I have run this for you before so we do not have to wait 3-5 hours to complete each of seven mappings. I have created a folder from where you can call all the BAM files `/pool/genomics/ariasc/SMSC_2023/mapping/`
+Note! this step is quite time-consuming. I have run this for you before so we do not have to wait 3-5 hours to complete each of seven mappings. I have created a folder from where you can call all the BAM files `/data/genomics/workshops/smsc_2024/BAMS`
 
 
 ### The Genome Analysis Toolkit (GATK)
 
-The GATK (Genome Analysis Toolkit) is one of the most used programs for genotype calling in sequencing data in model and non model organisms. However, the GATK was designed to analyze human genetic data and all its pipelines are optimized for this purpose. Variant calling with GATK currently requires 4 steps: Mark duplicates, 
+The GATK (Genome Analysis Toolkit) is one of the most used programs for genotype calling in sequencing data in model and non model organisms. However, the GATK was designed to analyze human genetic data and all its pipelines are optimized for this purpose. 
+
+Variant calling with GATK currently requires 4 steps: Mark duplicates -> AddOrReplaceReadGroups -> 
 
 
 ####  Mark Duplicates with picard-tools
@@ -112,7 +114,7 @@ Potential PCR duplicates need to be marked. Marking duplicates make sense even i
 - Memory: 10G (10G per CPU, 50G total)
 - Module: 
 ```
-  module load bio/gatk/4.1.3.0 
+  module load bio/gatk/4.5.0.0 
 ```
 - Commands:
 
