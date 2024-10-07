@@ -91,7 +91,7 @@ BUSCO (Simão et al. 2015; Waterhouse et al. 2017) assesses completeness by sear
 - Commands:
 
 ```
-busco -o Guam_Rail -i path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l eukaryota_odb10 -c $NSLOTS -m genome
+busco -o Guam_Rail -i path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l aves_odb10 -c $NSLOTS -m genome
 ```
 
 ##### Explanation:
@@ -110,20 +110,20 @@ BUSCO doesn't have an option to redirect the output to a different folder. For t
 
 ```
 cd ../busco
-qsub busco_cloud_leopard.job
+qsub busco_Guam_rail.job
 ```
 
 **Note about Databases:**
 
 If you do not have internet connection on the node where running the software you can download the database and run the program offline. For instance to download the Mammalia database you can use the command `wget` and extract it.It is important to dowlod and untar the folder on your busco folder. Let's `cd` to the directory `busco` first.
 
-	wget https://busco-data.ezlab.org/v5/data/lineages/mammalia_odb10.2021-02-19.tar.gz
-	tar -zxf mammalia_odb10.2021-02-19.tar.gz
+	wget https://busco-data.ezlab.org/v5/data/lineages/aves_odb10.2024-01-08.tar.gz 
+	tar -zxf aves_odb10.2024-01-08.tar.gz 
 
 In this case, the command to run busco will have to change to: 
 
 ```
-busco  -o Guam_Rail -i /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l eukaryota_odb10 -c $NSLOTS -m genome --offline --download_path /path/to/datasets
+busco  -o Guam_Rail -i /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l aves_odb10 -c $NSLOTS -m genome --offline --download_path /path/to/datasets
 ```
 
 
@@ -146,7 +146,7 @@ First, you need to blast your assembly to know nt databases. For this we will us
 - Commands:
 
 ```
-blastn -db /data/genomics/db/ncbi/db/latest_v4/nt/nt -query /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta -outfmt "6 qseqid staxids bitscore std" -max_target_seqs 20 -max_hsps 1 -evalue 1e-20 -num_threads $NSLOTS -out clouded_leopard_blast.out
+blastn -db /data/genomics/db/ncbi/db/latest_v4/nt/nt -query /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -outfmt "6 qseqid staxids bitscore std" -max_target_seqs 20 -max_hsps 1 -evalue 1e-20 -num_threads $NSLOTS -out Guam_Rail_blast.out
 ```
 
 ##### Explanation:
@@ -160,7 +160,7 @@ blastn -db /data/genomics/db/ncbi/db/latest_v4/nt/nt -query /path/to_assembly/mN
 -out: name of the output file
 ```
 
-Second, you need to map raw reads to the genome assembly. We will use minimap2 for this. Minimap2 is a versatile sequence alignment program that aligns DNA or mRNA sequences against reference database. Typical use cases include: (1) mapping PacBio or Oxford Nanopore genomic reads to a reference genome; or (2) aligning Illumina single- or paired-end reads to a reference genome. After mapping the reads we need to convert the output file SAM into a BAM fil and sort this file. For this we will the program samtools. Samtools is a suite of programs for interacting with high-throughput sequencing data. 
+Second, you need to map raw reads to the genome assembly. We will use minimap2 for this. Minimap2 is a versatile sequence alignment program that aligns DNA or mRNA sequences against reference database. Typical use cases include: (1) mapping PacBio or Oxford Nanopore genomic reads to a reference genome; or (2) aligning Illumina single- or paired-end reads to a reference genome. After mapping the reads we need to convert the output file SAM into a BAM file and sort this file. For this we will use the program samtools. Samtools is a suite of programs for interacting with high-throughput sequencing data. 
 
 #### Job file: minimap_clouded_leopard.job
 - Queue: medium
@@ -174,7 +174,7 @@ Second, you need to map raw reads to the genome assembly. We will use minimap2 f
 - Commands:
 
 ```
-minimap2 -ax map-hifi -t 20 /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta  /path/to_each/hifi1.fastq.gz /path/to_each/hifi2.fastq.gz /path/to_each/hifi3.fastq.gz | samtools view -b | samtools sort -@20 -O BAM -o cloud_leopard_sorted.bam -
+minimap2 -ax map-hifi -t 20 /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz  /path/to_each/hifi1.fastq.gz | samtools view -b | samtools sort -@20 -O BAM -o Guam_Rai_sorted.bam -
 ```
 
 ##### Explanation:
