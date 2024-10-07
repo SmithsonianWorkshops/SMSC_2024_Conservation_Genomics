@@ -21,7 +21,7 @@
 * To run Genomescope, first you need to generate a Jellyfish histogram.
 
 * You'll need two job files for Jellyfish, one to count the kmers and the second to generate a histogram to give to Genomescope: 
-* Here is a copy of the Cloud Leopard Illumina data: ```/data/genomics/workshops/smsc_2024/rawdata/```
+* Here is a copy of the Guam Rail Illumina data: ```/data/genomics/workshops/smsc_2024/rawdata/```
 	+ Hint: don't copy these data to your own space - they are very big.
 
 * First job file: kmer count:
