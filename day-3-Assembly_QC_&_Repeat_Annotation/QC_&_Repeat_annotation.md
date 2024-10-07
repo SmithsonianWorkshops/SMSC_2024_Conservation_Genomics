@@ -87,11 +87,11 @@ BUSCO (Simão et al. 2015; Waterhouse et al. 2017) assesses completeness by sear
 - PE: multi-thread
 - Number of CPUs: 10
 - Memory: 6G (6G per CPU, 60G total)
-- Module: `module load bio/busco/5.4.3`
+- Module: `module load bio/busco/5.7.0`
 - Commands:
 
 ```
-busco -o clouded_leopard -i path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta -l mammalia_odb10 -c $NSLOTS -m genome
+busco -o Guam_Rail -i path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l eukaryota_odb10 -c $NSLOTS -m genome
 ```
 
 ##### Explanation:
@@ -106,7 +106,7 @@ busco -o clouded_leopard -i path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta -l 
 
 ##### *** IMPORTANT ***
 
-BUSCO doesn't have an option to redirect the output to a different folder. For that reason, we will submit the BUSCO job from the `busco` folder. Assuming you just created the job file in the `jobs` folder:
+BUSCO doesn't have an option to redirect the output to a different folder. For that reason, we will submit the BUSCO job from the `busco` folder. Thus, make sure that your busco.job file is in your busco folder.
 
 ```
 cd ../busco
@@ -123,7 +123,7 @@ If you do not have internet connection on the node where running the software yo
 In this case, the command to run busco will have to change to: 
 
 ```
-busco  -o clouded_leopard -i /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta -l mammalia_odb10 -c $NSLOTS -m genome --offline --download_path /path/to/datasets
+busco  -o Guam_Rail -i /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l eukaryota_odb10 -c $NSLOTS -m genome --offline --download_path /path/to/datasets
 ```
 
 
