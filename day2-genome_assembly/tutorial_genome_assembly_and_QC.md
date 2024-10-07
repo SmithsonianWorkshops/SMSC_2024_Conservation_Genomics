@@ -1,14 +1,14 @@
-### 1. Running FastQC on raw data
+### 1. Running FastQC on raw illumina data
 * FastQC is a program that can quickly scan your raw data to help figure out if there are adapters or low quality reads present. Create a job file to run FastQC on one of the fastq files here: ```/data/genomics/workshops/smsc_2024/rawdata/```
 	+ **module**: ```bio/fastqc```
 	+ **command**: ```fastqc <FILE.fastq> -o .```
-	+ after your job finishes, find the results and download some of the images, e.g. ```per_base_quality.png``` to your local machine using ffsend (load ```bio/ffsend``` module) and then the command ```ffsend upload <FILE>```.
+	+ after your job finishes, find the results and download some of the images, e.g. ```per_base_quality.png``` to your local machine using ffsend (load ```tools/ffsend``` module) and then the command ```ffsend upload <FILE>```.
 
 
 ### 2. Trimming adapters with TrimGalore! 
 * PacBio data will be error-corrected solely by the assembler, but Illumina data trimming and thinning are common.
 * Most assemblers these days don't want you to trim/thin for quality before assembling, but trimming is important for downstream applications. TrimGalore will auto-detect what adapters are present and remove very low quality reads (quality score <20) by default.  
-* Create a job file to trim adapters and very low quality reads for the Illumina data here: ```/data/genomics/workshops/smsc_2023/clouded_leopard_illumina```
+* Create a job file to trim adapters and very low quality reads for the Illumina data here: ```/data/genomics/workshops/smsc_2024/rawreads/```
 	+ **command**: ```trim_galore --paired --retain_unpaired <FILE_1.fastq> <FILE_2.fastq>```  
 	+ **module**: ```bio/trim_galore```
 	+ You can then run FastQC again to see if anything has changed.
