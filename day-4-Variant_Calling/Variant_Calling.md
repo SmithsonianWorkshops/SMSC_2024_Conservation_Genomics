@@ -53,9 +53,9 @@ If we follow this folder structure, we will have all the results organized by so
 **Submitting jobs**: With this folder structure, we will save all the job files with each program folder and the job files will be submitted from there.   
 
 ### Input files
-For this session, we will use the reference cloud leopard assembly. You can find this file here: `/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz`
+For this session, we will use the reference for the Guam_rail assembly. You can find this file here: `/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz`
 
-We will also need the Illumina data (fastq) for our 7 Clouded Leopard individuals this will represent our population. Remember that the data are locted here: `//data/genomics/workshops/smsc_2024/rawdata`
+We will also need the Illumina data (fastq) for our 3 Guam Rail individuals this will represent our population. Remember that the data are locted here: `/data/genomics/workshops/smsc_2024/rawdata/`
 
 
 ### Map to the reference genome
@@ -75,7 +75,7 @@ module load bio/minimap2
 - Commands:
 
 ```
-minimap2 -ax sr -t 20 /data/genomics/workshops/smsc_2023/clouded_leopard_pacbio/mNeoNeb1.pri.cur.20220520.fasta /data/genomics/workshops/smsc_2023/clouded_leopard_illumina/NN114296_1.fastq.gz /data/genomics/workshops/smsc_2023/clouded_leopard_illumina/NN114296_2.fastq.gz | samtools sort -@20 -O BAM -o NN114296_clouded_leopard_sorted.bam -
+minimap2 -ax sr -t 20 /data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz /data/genomics/workshops/smsc_2024/rawdata/HOW_N23-0063_1.fastq.gz /data/genomics/workshops/smsc_2024/rawdata/HOW_N23-0063_2.fastq.gz | samtools sort -@20 -O BAM -o HOW_N23-0063_Guam_rail_sorted.bam -
 ```
 
 ##### Explanation:
@@ -93,7 +93,7 @@ sort: sort command
 -o: name of the outputformat
 ```
 
-Note! this step is quite time-consuming. I have run this for you before so we do not have to wait 3-5 hours to complete each of seven mappings. I have created a folder from where you can call all the BAM files `/data/genomics/workshops/smsc_2024/BAMS`
+Note! this step is quite time-consuming. I have run this for you before so we do not have to wait 3-5 hours to complete each of three mappings. I have created a folder from where you can call all the BAM files `/data/genomics/workshops/smsc_2024/BAMS`
 
 ## Check the bamfiles 
 To see the structure of the bam file, you can do in the terminal: 
