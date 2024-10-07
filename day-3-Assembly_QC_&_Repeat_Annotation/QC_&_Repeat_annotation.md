@@ -54,17 +54,17 @@ If we follow this folder structure, we will have all the results organized by so
 **Submitting jobs**: With this folder structure, we will save all the job files with each program folder and the job files will be submitted from there.   
 
 ### Input file
-For this session, we will use the new cloud leopard assembly. You can find this file here: `/data/genomics/workshops/smsc_2024/bHypOws1_hifiasm.bp.p_ctg.fasta.gz`
+For this session, we will use our new Guam Rail assembly. You can find this file here: `/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz`
 
 
-**If you want to run thing quickly you can run the programs by Extracting some scaffolds**
+**If you want to run things quickly you can run the programs by Extracting some scaffolds**
 <details><summary>SOLUTION</summary>
 <p>
 
 To generate this file, we used `bioawk` and `samtools` to extract the sequences from the original assembly:
 
-`module load bio/bioawk`
-`module load bio/samtools`
+`ml bio/bioawk`
+`ml bio/samtools`
 
 Create a list with the 10 largest sequences. The number of sequences is determined by the number following the `head` command in the end. 
 
