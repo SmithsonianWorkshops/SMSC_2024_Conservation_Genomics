@@ -8,7 +8,7 @@
 ### 2. Trimming adapters with TrimGalore! 
 * PacBio data will be error-corrected solely by the assembler, but Illumina data trimming and thinning are common.
 * Most assemblers these days don't want you to trim/thin for quality before assembling, but trimming is important for downstream applications. TrimGalore will auto-detect what adapters are present and remove very low quality reads (quality score <20) by default.  
-* Create a job file to trim adapters and very low quality reads for the Illumina data here: ```/data/genomics/workshops/smsc_2024/rawreads/```
+* Create a job file to trim adapters and very low quality reads for the Illumina data here: ```/data/genomics/workshops/smsc_2024/rawdata/```
 	+ **command**: ```trim_galore --paired --retain_unpaired <FILE_1.fastq> <FILE_2.fastq>```  
 	+ **module**: ```bio/trim_galore```
 	+ You can then run FastQC again to see if anything has changed.
@@ -21,7 +21,7 @@
 * To run Genomescope, first you need to generate a Jellyfish histogram.
 
 * You'll need two job files for Jellyfish, one to count the kmers and the second to generate a histogram to give to Genomescope: 
-* Here is a copy of the Cloud Leopard Illumina data: ```/data/genomics/workshops/smsc_2023/clouded_leopard_illumina```
+* Here is a copy of the Cloud Leopard Illumina data: ```/data/genomics/workshops/smsc_2024/rawdata/```
 	+ Hint: don't copy these data to your own space - they are very big.
 
 * First job file: kmer count:
@@ -56,14 +56,14 @@ Hifiasm is a fast haplotype-resolved de novo assembler for PacBio HiFi reads. It
   + **RAMMemory:** 10G (10G per CPU, 300G total)
   + **Module:** `module load bio/hifiasm`
   + **Command:**
-```hifiasm -o cloud_leopard_only.asm -t 32 cloud_leopard_hifi.fq.gz```
+```hifiasm -o Guam_Rail_only.asm -t 32 /data/genomics/workshops/smsc_2024/rawdata/SRR27030659_1_pacbio.fastq```
 
 ##### Comand explanation:
 ```
 -o: name and path of the output file in asm format
 -t: sets the number of CPUs in use
 
-cloud_leopard_hifi.fq.gz Input reads. Input sequences should be FASTA 
+SRR27030659_1_pacbio.fastq are our PacBio Guam Rail data. Input sequences should be FASTA 
 or FASTQ format, uncompressed or compressed with gzip (.gz). The quality scores of reads 
 in FASTQ are ignored by hifiasm. Hifiasm outputs assemblies in `GFA <https://github.com/pmelsted/GFA-spec/blob/master/GFA-spec.md>`_ format.
 ```
@@ -80,7 +80,7 @@ in FASTQ are ignored by hifiasm. Hifiasm outputs assemblies in `GFA <https://git
   + **RAMMemory:** 10G (10G per CPU, 300G total)
   + **Module:** `module load bio/hifiasm`
   + **Command:**
-  ```hifiasm -o cloud_leopard_hic.asm -t32 --h1 hi_c_read1.fq.gz --h2 hi_c_read2.fq.gz cloud_leopard_hifi.fq.gz```
+  ```hifiasm -o Guam_Rail_hic.asm -t32 --h1 hi_c_read1.fq.gz --h2 hi_c_read2.fq.gz /data/genomics/workshops/smsc_2024/rawdata/SRR27030659_1_pacbio.fastq```
 
 * This job should complete in a few hours
 * In this mode, each contig represents a haplotig, which means that comes from one parental haplotype only.
@@ -97,7 +97,7 @@ or FASTQ format, uncompressed or compressed with gzip (.gz). The quality scores 
 in FASTQ are ignored by hifiasm. Hifiasm outputs assemblies in `GFA <https://github.com/pmelsted/GFA-spec/blob/master/GFA-spec.md>`_ format.
 ```
 
-One last step. convert your primary and other assemblies into a fata files
+One last step. convert your primary and other assemblies into a fasta files
 
 ```
 qrsh
@@ -126,7 +126,7 @@ Mean contig size:
 Longest contig is:  
 Shortest contig is: 
 
-* We have put a finished assembly here: ```/data/genomics/workshops/STRI_genomics/cloud_leopard_final_assembly.fasta```
+* We have put a finished assembly here: ```/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz```
 	+ Module: ```bio/assembly_stats```
 	+ Commands: ```assembly_stats <ASSEMBLY> > assembly_stats.out```
 
