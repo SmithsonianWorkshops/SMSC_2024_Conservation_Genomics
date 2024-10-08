@@ -54,7 +54,7 @@ If we follow this folder structure, we will have all the results organized by so
 **Submitting jobs**: With this folder structure, we will save all the job files with each program folder and the job files will be submitted from there.   
 
 ### Input file
-For this session, we will use our new Guam Rail assembly. You can find this file here: `/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz`
+For this session, we will use our new Guam Rail assembly. You can find this file here: `/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta`
 
 
 **If you want to run things quickly you can run the programs by Extracting some scaffolds**
