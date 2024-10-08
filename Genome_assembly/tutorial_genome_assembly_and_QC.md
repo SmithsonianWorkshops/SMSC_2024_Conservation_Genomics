@@ -26,8 +26,12 @@
 
 * First job file: kmer count:
 	+ Module: ```bio/jellyfish```
-	+ Commands: ```jellyfish count -C -m 21 -t $NSLOTS -s 800000000 *.fastq -o reads.jf```
-	+ ```-m``` = kmer length  
+	+ Commands: ```zcat /data/genomics/workshops/smsc_2024/rawdata/SRR25828983_1.fastq.gz /data/genomics/workshops/smsc_2024/rawdata/SRR25828983_2.fastq.gz | jellyfish count -C -m 21 -t $NSLOTS -s 800000000 /dev/fd/0 -o reads.jf```
+	+ ```zcat``` = uncompress the .fastq.gz files and sends the output to standard output (stdout)
+ 	+  ```/dev/fd/0``` = This allows jellyfish to read from the standard input (stdin), which is receiving the uncompressed data from zcat.
+  	+ ```Pipping (|)``` = Passes the uncompressed data from zcat directly to the jellyfish count command.
+  	+ ```jellyfish count``` = Command to Count k-mers
+  	+ ```-m``` = kmer length  
 	+ ```-s``` = RAM  
 	+ ```-C``` = "canonical kmers" don't change this 
 	+ Hint: this job needs to run on the high memory queue. 
