@@ -32,7 +32,7 @@
   	+ ```Pipping (|)``` = Passes the uncompressed data from zcat directly to the jellyfish count command.
   	+ ```jellyfish count``` = Command to Count k-mers
   	+ ```-m``` = kmer length  
-	+ ```-s``` = RAM  
+	+ ```-s``` = sets the hash size. This depends on your system memory.
 	+ ```-C``` = "canonical kmers" don't change this 
 	+ Hint: this job needs to run on the high memory queue. 
 
