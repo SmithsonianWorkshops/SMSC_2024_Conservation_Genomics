@@ -42,7 +42,7 @@
 	+ Module: ```bio/jellyfish```
 	+ Commands: ```jellyfish histo -t $NSLOTS reads.jf > reads.histo```
 
-* Download the histogram to your computer (e.g. using ffsend again), and put it in the Genomescope webservice: [Genomescope](http://qb.cshl.edu/genomescope/)
+* Download the histogram to your computer (e.g. using ffsend again), and put it in the Genomescope webservice: [Genomescope]([http://qb.cshl.edu/genomescope/](http://genomescope.org/genomescope2.0/))
 
 * let's run the analysis the same analysis with the HiFi PacBio data.
 
