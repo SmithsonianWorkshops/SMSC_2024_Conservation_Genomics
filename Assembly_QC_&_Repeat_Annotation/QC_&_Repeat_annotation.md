@@ -82,7 +82,7 @@ Use `samtools` to extract the list of sequences from the original assembly:
 BUSCO (Simão et al. 2015; Waterhouse et al. 2017) assesses completeness by searching the genome for a selected set of single copy orthologous genes. There are several databases that can be used with BUSCO and they can be downloaded from here: [https://buscos.ezlab.org](https://buscos.ezlab.org). 
 
 
-#### Job file: busco_cloud_leopard.job
+#### Job file: busco_Guam_Rail.job
 - Queue: medium
 - PE: multi-thread
 - Number of CPUs: 10
@@ -137,7 +137,7 @@ BlobTools is a command line tool designed for interactive quality assessment of 
 First, you need to blast your assembly to know nt databases. For this we will use blastn. 
 
 
-#### Job file: blast_clouded_leopard.job
+#### Job file: blast_Guam_Rail.job
 - Queue: medium
 - PE: multi-thread
 - Number of CPUs: 10
@@ -162,7 +162,7 @@ blastn -db /data/genomics/db/ncbi/db/latest_v4/nt/nt -query /path/to_assembly/bH
 
 Second, you need to map raw reads to the genome assembly. We will use minimap2 for this. Minimap2 is a versatile sequence alignment program that aligns DNA or mRNA sequences against reference database. Typical use cases include: (1) mapping PacBio or Oxford Nanopore genomic reads to a reference genome; or (2) aligning Illumina single- or paired-end reads to a reference genome. After mapping the reads we need to convert the output file SAM into a BAM file and sort this file. For this we will use the program samtools. Samtools is a suite of programs for interacting with high-throughput sequencing data. 
 
-#### Job file: minimap_clouded_leopard.job
+#### Job file: minimap_Guam_Rail.job
 - Queue: medium
 - PE: multi-thread
 - Number of CPUs: 10
@@ -174,7 +174,7 @@ Second, you need to map raw reads to the genome assembly. We will use minimap2 f
 - Commands:
 
 ```
-minimap2 -ax map-hifi -t 20 /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz  /path/to_each/hifi1.fastq.gz | samtools view -b | samtools sort -@20 -O BAM -o Guam_Rai_sorted.bam -
+minimap2 -ax map-hifi -t 20 /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz  /path/to_each/hifi1.fastq.gz | samtools view -b | samtools sort -@20 -O BAM -o Guam_Rail_sorted.bam -
 ```
 
 ##### Explanation:
@@ -204,7 +204,7 @@ Now that we have the blast and mapping results we can create the BlobTools datab
 - Commands:
 
 ```
-blobtools create -i /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta -b /pool/genomics/ariasc/SMSC_2023/blobtools/clouded_leopard_mapped.bam -t /pool/genomics/ariasc/SMSC_2023/blobtools/clouded_leopard_blast.out -o my_first_blobplot
+blobtools create -i /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta -b /path/to_mapped_reads/Guam_Rail_sorted.bam -t /path/to_hits_output/Guam_Rail_blast.out -o Guam_Rail_my_first_blobplot
 ```
 
 ##### Explanation:
@@ -226,15 +226,15 @@ Once you have a BlobDir database, we can plot the blobplot and the covplot. Sinc
 qrsh
 module load bio/blobtools
 mkdir plots
-blobtools plot -i my_first_blobplot.blobDB.json -o plots/
+blobtools plot -i Guam_Rail_my_first_blobplot.blobDB.json -o plots/
 
 ```
 
 This comand generates three files:
 
-* my_first_blobplot.blobDB.json.bestsum.phylum.p7.span.100.blobplot.bam0.png
-* my_first_blobplot.blobDB.json.bestsum.phylum.p7.span.100.blobplot.read_cov.bam0.png
-* my_first_blobplot.blobDB.json.bestsum.phylum.p7.span.100.blobplot.stats.txt
+* Guam_Rail_my_first_blobplot.blobDB.json.bestsum.phylum.p7.span.100.blobplot.bam0.png
+* Guam_Rail_my_first_blobplot.blobDB.json.phylum.p7.span.100.blobplot.read_cov.bam0.png
+* Guam_Rail_my_first_blobplot.blobDB.json.bestsum.phylum.p7.span.100.blobplot.stats.txt
 
 Please download these files to your machine. Remember that you can use the ffsend module.
 
@@ -282,7 +282,7 @@ blobtools add --threads 3 --busco full_table.tsv clouded_leopard_blobt_nb
 
 After you finish creating and adding data to the database in order to visulize the results you need to install blobtools2 on your personal machine and  download the database folder. First lets tar zip the folder with the command ```tar -czvf name-of-archive.tar.gz /path/to/directory-or-file``` and  download the folder using the ffsend (load ```bio/ffsend``` module). 
 
-Now let's install blobtools on your machine. For this we will use conda...
+Now let's install blobtools on your machine. For this you can use conda...
 
 Please download your folder from the ffsend link, and move the file to a new folder on your machine. After downlodaing the folder you need to untar the folder
 
