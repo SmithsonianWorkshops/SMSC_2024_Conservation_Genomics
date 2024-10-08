@@ -91,7 +91,7 @@ BUSCO (Simão et al. 2015; Waterhouse et al. 2017) assesses completeness by sear
 - Commands:
 
 ```
-busco -o Guam_Rail -i path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l aves_odb10 -c $NSLOTS -m genome
+busco -o Guam_Rail -i path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta -l aves_odb10 -c $NSLOTS -m genome
 ```
 
 ##### Explanation:
@@ -123,7 +123,7 @@ If you do not have internet connection on the node where running the software yo
 In this case, the command to run busco will have to change to: 
 
 ```
-busco  -o Guam_Rail -i /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz -l aves_odb10 -c $NSLOTS -m genome --offline --download_path /path/to/datasets
+busco  -o Guam_Rail -i /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta -l aves_odb10 -c $NSLOTS -m genome --offline --download_path /path/to/datasets
 ```
 
 
