@@ -204,7 +204,7 @@ Now that we have the blast and mapping results we can create the BlobTools datab
 - Commands:
 
 ```
-blobtools create -i /data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta -b Guam_Rail_sorted.bam-t /path/to_hits_output/Guam_Rail_blast.out -o Guam_Rail_my_first_blobplot
+blobtools create -i /data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta -b Guam_Rail_sorted.bam -t /path/to_hits_output/Guam_Rail_blast.out -o Guam_Rail_my_first_blobplot
 ```
 
 ##### Explanation:
