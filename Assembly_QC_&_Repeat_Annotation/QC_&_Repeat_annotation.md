@@ -1,4 +1,4 @@
-# Genome assembly QC and Genome annotation - SMSC (Day 3)
+# Genome assembly QC and Genome annotation - SMSC
 
 <!-- TOC depthFrom:2 -->
 
