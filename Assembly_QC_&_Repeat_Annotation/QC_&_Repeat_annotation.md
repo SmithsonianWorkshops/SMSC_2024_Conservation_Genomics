@@ -333,7 +333,7 @@ The first step to run Repeatmodeler is that you need to build a Database. The Bu
 - Commands:
 
 ```
-BuildDatabase -name Guam_Rail /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta
+BuildDatabase -name Guam_rail /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta
 # usage:BuildDatabase -name {database_name} {genome_file-in_fasta_format}
 ```
 ##### Explanation:
@@ -357,7 +357,7 @@ The second step is two actually run RepeatModeler. Again this can take several d
 
 ```
 # Usage: RepeatModeler -database {database_name} -pa {number of cores} -LTRStruct > out.log
-RepeatModeler -database Guam_Rail -pa 36 -engine ncbi > repeatmodeler_GR_out.log
+RepeatModeler -database Guam_rail -threads 36 -engine ncbi -LTRStruct  > repeatmodeler_GR_out.log
 
 ```
 
