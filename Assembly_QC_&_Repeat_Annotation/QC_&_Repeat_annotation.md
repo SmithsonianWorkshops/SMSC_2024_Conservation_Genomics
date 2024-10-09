@@ -174,7 +174,7 @@ Second, you need to map raw reads to the genome assembly. We will use minimap2 f
 - Commands:
 
 ```
-minimap2 -ax map-hifi -t 20 /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz  /path/to_each/hifi1.fastq.gz | samtools view -b | samtools sort -@20 -O BAM -o Guam_Rail_sorted.bam -
+minimap2 -ax map-hifi -t 20 /data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz  /data/genomics/workshops/smsc_2024/rawdata/SRR27030659_1_pacbio.fastq | samtools view -b | samtools sort -@20 -O BAM -o Guam_Rail_sorted.bam -
 ```
 
 ##### Explanation:
