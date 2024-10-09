@@ -409,13 +409,14 @@ RepeatMasker -pa $NSLOTS -xsmall -gff -lib consensi.fa.classified -dir ../repeat
 Gene Model Mapper (GeMoMa) is a homology-based gene prediction program. GeMoMa uses the annotation of protein-coding genes in a reference genome to infer the annotation of protein-coding genes in a target genome. Thus, GeMoMa uses amino acid and intron position conservation to create gen models. In addition, GeMoMa allows to incorporate RNA-seq evidence for splice site prediction. (see more in [GeMoMa](http://www.jstacs.de/index.php/GeMoMa-Docs)).
 
 
-In this section, we show how to run the main modules and analysis with GeMoMa using real data. We will start the genome annotation for our Clouded Leopard final genome. Since GeMoMa uses the annotation of coding genes from reference genome the first step is to download some reference genomes (taxa_assembly.fasta) with its genome annotation (taxa_annotation.gff). We have done this for you already to speed up the process. The reference genomes that we have are located here ```/data/genomics/workshops/smsc_2023/ref_genomes```. We have a total of 6 reference genomes for closely related taxa:
+In this section, we show how to run the main modules and analysis with GeMoMa using real data. We will start the genome annotation for our Clouded Leopard final genome. Since GeMoMa uses the annotation of coding genes from reference genome the first step is to download some reference genomes (taxa_assembly.fasta) with its genome annotation (taxa_annotation.gff). We have done this for you already to speed up the process. The reference genomes that we have are located here ```/data/genomics/workshops/smsc_2024/ref_genomes```. We have a total of 6 reference genomes for closely related taxa:
 
-* Neofelis nebulosa (Clouded Leopard v1)
-* Neofelis diardi
-* Felis catus (Domestic Cat)
-* Canis familiaris (Domestic Dog)
-* Homo sapiens (Human)
+* Atlantisia rogersi (Island rail)
+* Falco peregrinus (Peregrine falcon)
+* Gallus gallus (red junglefowl )
+* Strigops habroptila (Kākāpō)
+* Zapornia atra (Henderson crake)
+* Taeniopygia (Zebra finch)
 
 If you wish to download other genomes you need to search on known genome databases or genome hubs. For instance, you can search on NCBI genomes and get the ftp url and download the files (gff and fasta) using wget. 
 
@@ -434,7 +435,7 @@ cd ..
 
 In General GeMoMa workflow performs 7 stepts: Extract RNA-seq evidence (ERE), DenoiseIntrons, Extractor, external search (tblastn or mmseqs), Gene Model Mapper (GeMoMa), GeMoMa Annotation Filter (GAF), and AnnnotationFinalizer. You can run this modules one by one or you can use the GeMoMa Pipeline, which is a multi-threaded tool that can uses all compute cores on one machine. 
 
-#### Job file: gemoma_cloud_leopard.job
+#### Job file: gemoma_Guam_Rail.job
 - Queue: high memory, medium time
 - PE: multi-thread
 - Number of CPUs: 40
@@ -445,7 +446,7 @@ In General GeMoMa workflow performs 7 stepts: Extract RNA-seq evidence (ERE), De
 
 ```
 set maxHeapSize 400000
-GeMoMa -Xmx400G GeMoMaPipeline threads=$NSLOTS outdir=../gemoma/ GeMoMa.Score=ReAlign AnnotationFinalizer.r=NO p=false o=true t=../assembly/mNeoNeb1.pri.cur.20220520.fasta s=own i=cat a=/pool/genomics/ariasc/SMSC_2023/ref_genomes/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.gff g=/pool/genomics/ariasc/SMSC_2023/ref_genomes/GCF_018350175.1_F.catus_Fca126_mat1.0_genomic.fna s=own i=dog a=/pool/genomics/ariasc/SMSC_2023/ref_genomes/GCF_014441545.1_ROS_Cfam_1.0_genomic.gff.gz g=/pool/genomics/ariasc/SMSC_2023/ref_genomes/GCF_014441545.1_ROS_Cfam_1.0_genomic.fna.gz s=own i=human a=/pool/genomics/ariasc/SMSC_2023/ref_genomes/GCF_000001405.40_GRCh38.p14_genomic.gff.gz g=/pool/genomics/ariasc/SMSC_2023/ref_genomes/GCF_000001405.40_GRCh38.p14_genomic.fna.gz s=own i=n_diardi a=/pool/genomics/ariasc/SMSC_2023/ref_genomes/diardi_annotation.gff  g=/pool/genomics/ariasc/SMSC_2023/ref_genomes/neofelis_diardi_masked.fasta s=own i=n_nebulosa_v1 a=/pool/genomics/ariasc/SMSC_2023/ref_genomes/hic_nebulosa_annotation.gff g=/pool/genomics/ariasc/SMSC_2023/ref_genomes/clouded_leopard_HiC.fasta
+GeMoMa -Xmx400G GeMoMaPipeline threads=$NSLOTS GeMoMa.Score=ReAlign AnnotationFinalizer.r=NO p=true o=true t=/path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz outdir=output/ s=own i=G_gallus a=ref_genomes/Gallus_gallus/GCF_016699485.2_bGalGal1.mat.broiler.GRCg7b_genomic.gff.gz g=ref_genomes/Gallus_gallus/GCF_016699485.2_bGalGal1.mat.broiler.GRCg7b_genomic.fna.gz s=own i=A_rogersi a=ref_genomes/Atlantisia_rogersi/GCA_013401215.1_ASM1340121v1_genomic.gff.gz g=ref_genomes/Atlantisia_rogersi/GCA_013401215.1_ASM1340121v1_genomic.fna.gz s=own i=F_peregrinus a=ref_genomes/Falco_peregrinus/GCF_023634155.1_bFalPer1.pri_genomic.gff.gz g=ref_genomes/Falco_peregrinus/GCF_023634155.1_bFalPer1.pri_genomic.fna.gz s=own i=S_habroptila a=ref_genomes/Strigops_habroptila/GCF_004027225.2_bStrHab1.2.pri_genomic.gff.gz g=ref_genomes/Strigops_habroptila/GCF_004027225.2_bStrHab1.2.pri_genomic.fna.gz s=own i=Z_atra a=ref_genomes/Zapornia_atra/GCA_013400835.1_ASM1340083v1_genomic.gff.gz g=ref_genomes/Zapornia_atra/GCA_013400835.1_ASM1340083v1_genomic.fna.gz s=own i=Z_finch a=ref_genomes/Zebra_finch/GCF_003957565.2_bTaeGut1.4.pri_genomic.gff.gz g=ref_genomes/Zebra_finch/GCF_003957565.2_bTaeGut1.4.pri_genomic.fna.gz
 ```
 
 ##### Explanation:
@@ -469,7 +470,7 @@ a: path to indvidual annotation genome
 * If you like to use mapped RNA-seq data, you have to use the parameters r and ERE.m:
 
 ```
-GeMoMa -Xmx400G GeMoMaPipeline  threads=$NSLOTS AnnotationFinalizer.r=NO p=false o=true t=clouded_leopard.fna.gz outdir=output/ r=MAPPED ERE.m=<SAM/BAM> a=NCBI/GCF_XXXX_genomic.gff.gz g=NCBI/GCF_XXXX_genomic.fna.gz
+GeMoMa -Xmx400G GeMoMaPipeline  threads=$NSLOTS AnnotationFinalizer.r=NO p=false o=true t=Guam_Rail.fna.gz outdir=output/ r=MAPPED ERE.m=<SAM/BAM> a=NCBI/GCF_XXXX_genomic.gff.gz g=NCBI/GCF_XXXX_genomic.fna.gz
 
 ```
 * If you like to combine GeMoMa predictions with given external annotation external.gff, e.g., from ab-initio gene prediction, you can use the parameter e:
