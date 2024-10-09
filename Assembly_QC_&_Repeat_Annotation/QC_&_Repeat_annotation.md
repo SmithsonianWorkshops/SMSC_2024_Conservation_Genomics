@@ -142,7 +142,7 @@ First, you need to blast your assembly to know nt databases. For this we will us
 - PE: multi-thread
 - Number of CPUs: 10
 - Memory: 6G (6G per CPU, 60G total)
-- Module: `module load bio/blast/2.13.0`
+- Module: `module load bio/blast/2.15.0`
 - Commands:
 
 ```
@@ -254,7 +254,7 @@ Now that we have the blast and mapping results we can create the BlobTools2 data
 ```
 qrsh -pe mthread 3
 module load bio/blobtools/2.6.3 
-blobtools create --fasta /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta clouded_leopard_blobt_nb
+blobtools create --fasta /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta.gz Guam_Rail_blobt_nb
 ```
 
 ##### Explanation:
@@ -273,9 +273,9 @@ Again, since this is not computationally expensive we can use an interactive nod
 ```
 qrsh -pe mthread 3
 module load bio/blobtools/2.6.3 
-blobtools add --threads 3 --hits clouded_leopard_blast.out --taxrule bestsumorder --taxdump /pool/genomics/ariasc/SMSC_2023/blobtools/taxdump clouded_leopard_blobt_nb 
-blobtools add --threads 3 --cov cloud_leopard_sorted.bam clouded_leopard_blobt_nb # this can take a several minutes 
-blobtools add --threads 3 --busco full_table.tsv clouded_leopard_blobt_nb
+blobtools add --threads 3 --hits Guam_Rail_blast.out --taxrule bestsumorder --taxdump /pool/genomics/ariasc/SMSC_2023/blobtools/taxdump Guam_Rail_blobt_nb 
+blobtools add --threads 3 --cov Guam_Raai._sorted.bam Guam_Rail_blobt_nb # this can take a several minutes 
+blobtools add --threads 3 --busco full_table.tsv Guam_Rail_blobt_nb
 ```
 
 #### Create interactive html page with the blobtools results
@@ -303,7 +303,7 @@ After installing blobtools2 make sure that you have activate your conda environm
 
 ```
 conda activate btk_env
-./blobtools view --remote path/to/clouded_leopard_nb
+./blobtools view --remote path/to/Guam_Rail_nb
 ```
 The cool thing about this is that you can interact with the results and visualize them in several ways. It also give you nice images that can be use on your publication.
 
