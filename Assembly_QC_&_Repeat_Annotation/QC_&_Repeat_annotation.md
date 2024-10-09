@@ -333,7 +333,7 @@ The first step to run Repeatmodeler is that you need to build a Database. The Bu
 - Commands:
 
 ```
-BuildDatabase -name clouded_leopard /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta
+BuildDatabase -name Guam_Rail /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta
 # usage:BuildDatabase -name {database_name} {genome_file-in_fasta_format}
 ```
 ##### Explanation:
@@ -357,7 +357,7 @@ The second step is two actually run RepeatModeler. Again this can take several d
 
 ```
 # Usage: RepeatModeler -database {database_name} -pa {number of cores} -LTRStruct > out.log
-RepeatModeler -database clouded_leopard -pa 36 -engine ncbi > repeatmodeler_cl_out.log
+RepeatModeler -database Guam_Rail -pa 36 -engine ncbi > repeatmodeler_GR_out.log
 
 ```
 
@@ -387,7 +387,7 @@ The last step to get a repeat annotation is to run ReapeatMasker.
 ```
 # usage: RepeatMasker -pa 30 -gff -lib {consensi_classified} -dir {dir_name} {genome_in_fasta}
 
-RepeatMasker -pa $NSLOTS -xsmall -gff -lib consensi.fa.classified -dir ../repeatmasker /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta
+RepeatMasker -pa $NSLOTS -xsmall -gff -lib consensi.fa.classified -dir ../repeatmasker /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta
 ```
 ##### Explanation:
 ```
@@ -418,7 +418,7 @@ lets create a new folder to run this job and to hold the results.
 - Commands:
 
 ```
-RepeatMasker -species mammalia -pa $NSLOTS -xsmall -dir ../repeatmasker /path/to_assembly/mNeoNeb1.pri.cur.20220520.fasta
+RepeatMasker -species mammalia -pa $NSLOTS -xsmall -dir ../repeatmasker /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta
 
 ```
 ##### Explanation:
