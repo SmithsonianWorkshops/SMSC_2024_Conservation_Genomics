@@ -347,7 +347,7 @@ genome file in fasta format
 
 The second step is two actually run RepeatModeler. Again this can take several days depending on the genome size.
 
-#### Job file: repeatmodeler_cloud_leopard.job
+#### Job file: repeatmodeler_Guam_Rail.job
 - Queue: high
 - PE: multi-thread
 - Number of CPUs: 36
@@ -376,7 +376,7 @@ RepeatModeler -database Guam_Rail -pa 36 -engine ncbi > repeatmodeler_GR_out.log
 The last step to get a repeat annotation is to run ReapeatMasker. 
 
 
-#### Job file: repeatmasker_cloud_leopard.job
+#### Job file: repeatmasker_Guam_Rail.job
 - Queue: high
 - PE: multi-thread
 - Number of CPUs: 30
