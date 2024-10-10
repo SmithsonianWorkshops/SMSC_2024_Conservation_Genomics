@@ -322,7 +322,7 @@ First, you create a read kmer database from the HiFi, ONT or reads used for the 
 
 ```
 qrsh -pe mthread 4
-module load bioinformatics/merqury
+module load bioinformatics/merqury/1.3
 sh $MERQURY/best_k.sh 120000000
 
 meryl count k=21 count /data/genomics/workshops/smsc_2024/rawdata/SRR27030659_1_pacbio.fastq output bHypOWs1.meryl
@@ -332,7 +332,7 @@ merqury.sh bHypOws1.meryl bHypOws1_hifiasm.bp.p_ctg.fasta bHypOws1_primary
 
 ```
 qrsh -pe mthread 4
-module load bioinformatics/merqury
+module load bioinformatics/merqury/1.3
 sh $MERQURY/best_k.sh 1200000000
 
 meryl count k=21 count Aambiguus_duplex.fastq.gz output Aambiguus_duplex.meryl
