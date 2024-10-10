@@ -134,9 +134,12 @@ generate_plot.py -wd /scratch/genomics/ariasc/smsc_2024/busco_run/Guam_Rail
 
 ##### Explanation:
 
+```
 -wd: Path to the BUSCO results directory
+```
 
 This will generate a .png file of your BUSCO results, which visually summarizes the completeness of the dataset in terms of the number of complete, fragmented, or missing BUSCOs.
+
 
 ### Run Bloobtools
 
