@@ -126,7 +126,17 @@ In this case, the command to run busco will have to change to:
 ```
 busco  -o Guam_Rail -i /path/to_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta -l aves_odb10 -c $NSLOTS -m genome --offline --download_path /path/to/datasets
 ```
+To Plot the results use the generate_plot.py script provided by BUSCO.
 
+```
+generate_plot.py -wd /scratch/genomics/ariasc/smsc_2024/busco_run/Guam_Rail 
+```
+
+##### Explanation:
+
+-wd: Path to the BUSCO results directory
+
+This will generate a .png file of your BUSCO results, which visually summarizes the completeness of the dataset in terms of the number of complete, fragmented, or missing BUSCOs.
 
 ### Run Bloobtools
 
