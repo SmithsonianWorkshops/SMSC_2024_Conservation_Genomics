@@ -84,11 +84,11 @@ in FASTQ are ignored by hifiasm. Hifiasm outputs assemblies in `GFA <https://git
   + **RAMMemory:** 10G (10G per CPU, 300G total)
   + **Module:** `module load bio/hifiasm`
   + **Command:**
-  ```hifiasm -o Guam_Rail_hic.asm -t32 --h1 hi_c_read1.fq.gz --h2 hi_c_read2.fq.gz /data/genomics/workshops/smsc_2024/rawdata/SRR27030659_1_pacbio.fastq```
+  ```hifiasm -o Guam_Rail_hic.asm -t32 --h1 7AFA556_1.fastq.gz --h2 7AFA556_2.fastq.gz Aambiguus_duplex.fastq.gz```
 
 * This job should complete in a few hours
 * In this mode, each contig represents a haplotig, which means that comes from one parental haplotype only.
-* Hifiasm doen not performed scaffolding. For this run scaffolder such as SALSA.
+* Hifiasm doen not performed scaffolding. For this run scaffolder such as SALSA or yahs.
 
 ##### Command explanation:
 ```
