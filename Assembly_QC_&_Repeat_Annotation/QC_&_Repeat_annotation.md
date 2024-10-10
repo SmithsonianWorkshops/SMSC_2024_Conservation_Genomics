@@ -7,6 +7,7 @@
  * [Run BUSCO](#Run-BUSCO)
  * [Run Blobtools](#Run-Blobtools)
  * [Run Blobtools2](#Run-Blobtools2)
+ * [Run Merqury](#Run-Merqury)
  * [Masking and annotating repetitive elements with Repeatmodeler and RepeatMasker](#Masking-and-annotating-repetitive-elements-with-Repeatmodeler-and-RepeatMasker)
  * [Running GeMoMa](#Running-GeMoMa)
 
@@ -315,6 +316,45 @@ The cool thing about this is that you can interact with the results and visualiz
 * Are there any contamination?
 * if yes, what taxa are contaminant of your assembly?
 
+### Kmer-based assembly evaluation with Merqury and Meryl
+
+First, you create a read kmer database from the HiFi, ONT or reads used for the base assembly using meryl. We will be doing two examples one on the Ara ambiguus haplotype-resolved assembly and the other on our primary Guam Rail assembly.
+
+```
+qrsh -pe mthread 4
+module load bioinformatics/merqury
+sh $MERQURY/best_k.sh ....
+
+meryl count k=21 count SRR_1.fastq.gz output bHypOWs1.meryl
+
+merqury.sh bHypOws1.meryl bHypOws1_hifiasm.bp.p_ctg.fasta bHypOws1_primary
+```
+
+```
+qrsh -pe mthread 4
+module load bioinformatics/merqury
+sh $MERQURY/best_k.sh 1200000000
+
+meryl count k=21 count Aambiguus_duplex.fastq.gz output Aambiguus_duplex.meryl
+```
+
+Second, you run merqury.sh using the following commands below:
+
+```
+merqury.sh Aambiggus_duplex.meryl bAraAmb1.hic.hap1.p_ctg.fasta bAraAmb1.hic.hap2.p_ctg.fasta bAraAmb1_merqury
+```
+
+Now, lets ruu this on our Guam Rail HiFiasm primary assembly with the genome size estimated from Genomescope.
+
+```
+qrsh -pe mthread 4
+module load bioinformatics/merqury
+sh $MERQURY/best_k.sh ....
+
+meryl count k=21 count SRR_1.fastq.gz output bHypOWs1.meryl
+
+merqury.sh bHypOws1.meryl bHypOws1_hifiasm.bp.p_ctg.fasta bHypOws1_primary
+```
 
 ### Masking and annotating repetitive elements with Repeatmodeler and RepeatMasker
 
