@@ -455,9 +455,9 @@ RepeatMasker -pa $NSLOTS -xsmall -gff -lib consensi.fa.classified -dir ../repeat
 ```
 
 ##### Output files:
-- mNeoNeb1.pri.cur.20220520.fasta.tbl: summary information about the repetitive elements
-- mNeoNeb1.pri.cur.20220520.masked.fasta: masked assembly (in our case, softmasked)
-- mNeoNeb1.pri.cur.20220520.fasta.out: detailed information about the repetitive elements, including coordinates, repeat type and size.
+- bHypOws1_hifiasm.bp.p_ctg.fasta.tbl: summary information about the repetitive elements
+- bHypOws1_hifiasm.bp.p_ctg..masked.fasta: masked assembly (in our case, softmasked)
+- bHypOws1_hifiasm.bp.p_ctg.fasta.out: detailed information about the repetitive elements, including coordinates, repeat type and size.
 
 
 ### Run GeMoMa
