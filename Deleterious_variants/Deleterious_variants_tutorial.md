@@ -2,159 +2,126 @@
 
 ### Introduction
 
-SnpEff and SnpSift are powerful tools designed for annotating and analyzing genetic variants, with a focus on deleterious variants. This tutorial will guide you through the process of using these tools to work with non-model organisms. We'll provide insights on how to map the genome against a reference that has a SnpEff database available, perform the analysis, and finish with enrichment analysis options using g:Profiler.
+Ensembl's Variant Effect Predictor, __VEP__, is a tool for annotating and analyzing genetic variants, with a focus on deleterious variants. There are prebuild databases for thousands of genomes, and using the tool for these provides some extra features, such as prediction score for deleteriousness of non-synonymous sites, calculated from large sets of homologous proteins. However, it is possible to use the tool on novel genomes as well, using the fasta sequence and a gene annotation file. This will provide one of the following _impact factors_ for all our variants:
 
-1. Preparing the reference genome and annotation
+| Impact factor | Description |
+| --- | ----|
+| LOW | synonymous variants |
+| MODERATE | non-synonymous variants
+| HIGH | non-sense variants (affect start, stop or reading frame) |
+| MODIFIER | all other variants (for example intronic, UTRs, intergenic) |
 
-Before using SnpEff and SnpSift, you need to have a reference genome and annotation files. If you're working with non-model organisms, you might have to create a custom SnpEff database using the organism's reference genome and annotation files. The annotation files usually include gene models in GFF3, GTF, or Gencode format. Another option is to map your reads to a closely related species that already has its genome in the SnpEff database.
+In this tutorial we will first annotate the SNP variants in the Guam rail, and then extract the classes LOW, MODERATE and HIGH to analyze them further.
 
-1. Creating a custom SnpEff database
+### Run VEP  
 
-To create a custom SnpEff database, follow these steps:
+#### 1. Preparing the reference genome and annotation
 
-a. Download the SnpEff software and set up the environment:
+To run VEP on a non-model organism, you need to have a reference genome and annotation files. The annotation files usually include gene models in GFF or GTF format. The annotation file further needs to be indexed with tabix
 
+Paths to files:
 ```bash
-wget http://sourceforge.net/projects/snpeff/files/snpEff_latest_core.zip
-unzip snpEff_latest_core.zip
-cd snpEff
+# assembly file in fasta format
+/data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta
+# Annotation file in gff format
+/data/genomics/workshops/smsc_2024/Guam_rail_assembly/Guam_rail.gff
+# Variation data for our resequenced individuals in vcf format
+/data/genomics/workshops/smsc_2024/???
+```
+##### a. Create a directory to work in
+```bash
+mkdir Deleterious
+cd Deleterious
 ```
 
-b. Create a new directory for your non-model organism in the `data` folder:
-
+##### b. Indexing the annotation file
 ```bash
-mkdir data/your_organism
+# Load tabix module
+ml ...
+# Sort and compress the file
+grep -v "#" /data/genomics/workshops/smsc_2024/Guam_rail_assembly/Guam_rail.gff | sort -k1,1 -k4,4n -k5,5n -t$'\t' | bgzip -c >Guam_rail.gff.gz
+# Index
+tabix -p gff Guam_rail.gff.gz
 ```
 
-c. Copy the reference genome (FASTA) and annotation (GFF3, GTF, or Gencode) files into the new directory:
+##### 2. Run the variant predictor
+This code should be placed in a script and run on the cluster. If you have your own copy of the assembly file you can use this. You can also make a softlink to the common fasta file using `ln -s originalfile yourfile`.
 
 ```bash
-cp /path/to/reference_genome.fasta data/your_organism/
-cp /path/to/annotation_file.gff3 data/your_organism/
+# Load ensembl module
+ml bio/ensembl-vep
+# Run vep
+vep -i path/to/variantfile.vcf --cache --gff Guam_rail.gff.gz --fasta bHypOws1_hifiasm.bp.p_ctg.fasta -o vep_rail
 ```
 
-d. Modify the `snpEff.config`  file to include the new genome:
+### Analyze the output
+
+#### 1. Familiarize yourself with the output
+If VEP worked, it will produce three output files: vep_rail.txt, vep_rail_summary.html and vep_rail_warnings.txt. The first file contains the raw output. The second file contains a neat summary suitable to open in a web browser (if the hydra cluster doesn't support opening of such file, one option is to save the file locally on your laptop). ADD LINK TO THIS FILE. The third file shows any warnings, for example if there are annotations in the gff file not recognized by VEP.
+
+_For all the commands below, make it a habit to look at the output files, for example with `less`!_
+
+All the information in the summary can also be found in the raw output. We can use a variety of unix tools to check it out:
+```bash
+# Count the number of annotated variants
+# (Grep -v removes the header lines: the ones that start with #)
+grep -v "^#" vep_rail.txt |wc -l
+```
+How does this relate to the number variants in your input file?
+```bash
+# Count the number of unique annotated variants
+# (cut -f1 extracts the first column only, uniq take only unique lines, and wc -l counts the lines)
+grep -v "^#" vep_rail.txt |cut -f1 |uniq |wc -l
+```
+
+Many variants are annotated several times, for example if a gene has multiple transcripts, or if two genes are overlapping.
 
 ```bash
-echo "your_organism.genome : Your_Organism" >> snpEff.config
+# Check what annotations are classified as having a low impact, and how many there are of each type
+# (sort will sort the output in alphabetical order, and uniq -c will count all unique lines)
+grep "IMPACT=LOW" vep_rail.txt  |cut -f7 |sort |uniq -c
 ```
 
-e. Build the SnpEff database:
+Now you can do the same with for the other impact types.
 
+#### 2. Extract subsets of data
+As we are interested in the deleterious variants, we will mainly focus on the MODERATE and the HIGH impact category. However, to have something potentially neutral to compare with, we will keep the LOW category for a little bit longer.
+
+First we extract the most severe category - nonsense variants
 ```bash
-java -jar snpEff.jar build -gff3 -v your_organism
+# Extract variants with a high predicted impact.
+grep "IMPACT=HIGH" vep_rail.txt |cut -f2 >high_impact.pos.txt
 ```
-
-1. Mapping the genome against a reference with SnpEff database
-
-To map the genome of your non-model organism against a reference with a SnpEff database, you will first need to align the reads to the reference genome using an aligner like BWA or Bowtie2. Once you have the alignments in BAM or SAM format, you can call variants using a tool like GATK, FreeBayes, or Samtools.
-
-1. Annotating variants with SnpEff
-
-With the custom SnpEff database created and the variants called, you can now annotate the variants using SnpEff:
-
+Now do the same for the non-synonymous variants
 ```bash
-java -jar snpEff.jar your_organism input.vcf > annotated_output.vcf
+grep "IMPACT=MODERATE" vep_rail.txt |cut -f2 >moderate_impact.pos.txt
 ```
-
-1. Analyzing deleterious variants with SnpSift
-
-SnpSift is a collection of tools that can be used to filter, sort, and analyze the annotated VCF files. You can filter deleterious variants using SnpSift Filter:
-
+Are there any sites annotated as both HIGH and MODERATE? We can check this by joining the two files:
 ```bash
-java -jar SnpSift.jar filter "ANN[0].EFFECT has 'missense_variant' | ANN[0].EFFECT has 'frameshift_variant'" annotated_output.vcf > deleterious_variants.vcf
+join high_impact.variants.txt moderate_impact.pos.txt
 ```
-
-Some other examples of filters you can use with SnpSift
-
-a) Filtering by quality (QUAL) and depth (DP):
-
+If there are, we should remove the shared variants from the less severe impact class.
 ```bash
-java -jar SnpSift.jar filter "(QUAL > 30) & (DP > 10)" input.vcf > filtered_output.vcf
+# Re-run extracting moderate variants, removing positions overlapping with high impact
+# join -v1 will return all lines in file 1 not overlapping with file 2.
+grep "IMPACT=MODERATE" vep_rail.txt |cut -f2 |join -v1 - high_impact.variants.txt >moderate_impact.pos.txt
 ```
-
-b) Filtering by minor allele frequency (AF) for a specific population in a 1000 Genomes Project VCF file:
-
+We can do the same for the LOW impact variants, removing any overlaps with either of the two previous files.
 ```bash
-java -jar SnpSift.jar filter "AF < 0.05" input.vcf > filtered_output.vcf
+grep "IMPACT=LOW" vep_rail.txt |cut -f2 |join -v1 - high_impact.pos.txt |join -v1 - moderate_impact.pos.txt >low_impact.pos.txt
 ```
 
-c) Filtering by impact, retaining only HIGH impact variants:
-
+If we want to extract the variants from the vcf file using vcftools, we need tab separated positions files. We can use the Stream EDitor sed to replace the ":" to tabs (\t).
 ```bash
-java -jar SnpSift.jar filter "ANN[0].IMPACT has 'HIGH'" input.vcf > high_impact_output.vcf
+sed -i '' 's/:/\t/g' low_impact.pos.txt
+sed -i '' 's/:/\t/g' moderate_impact.pos.txt
+sed -i '' 's/:/\t/g' high_impact.pos.txt
 ```
 
-d) Filtering by specific gene:
-
+Create new vcf files with the variants we are interested in.
 ```bash
-java -jar SnpSift.jar filter "ANN[0].GENE has 'BRCA1'" input.vcf > brca1_output.vcf
-```
-
-e) Filtering variants that are either missense, frameshift, or stop gained, and have a SIFT score below 0.05:
-
-```bash
-java -jar SnpSift.jar filter "(ANN[0].EFFECT has 'missense_variant' | ANN[0].EFFECT has 'frameshift_variant' | ANN[0].EFFECT has 'stop_gained') & (ANN[0].SIFT_SCORE < 0.05)" input.vcf > filtered_output.vcf
-```
-
-### Enrichment analysis with g:Profiler
-
-Performing gene enrichment analysis is a crucial step after identifying genes containing deleterious variants, as it provides essential insights into the biological context and functional implications of these genes. Gene enrichment analysis allows researchers to understand the roles of genes within a broader biological framework, facilitating the elucidation of underlying molecular mechanisms and pathways associated with a particular phenotype or disease.
-
-g:Profiler is a web-based tool that allows you to perform functional enrichment analysis. It also has a python package, you can see an script example here
-
-```python
-import argparse
-import pandas as pd
-from gprofiler import GProfiler
-
-def read_gene_list(file_path):
-    with open(file_path, "r") as file:
-        genes = [line.strip() for line in file.readlines()]
-    return genes
-
-def run_gprofiler(genes, output_prefix):
-    gp = GProfiler(return_dataframe=True)
-
-    enrichment_results = gp.profile(organism='hsapiens', query=genes)
-
-    # Save the raw results to a CSV file
-    enrichment_results.to_csv(f"{output_prefix}_raw_enrichment_results.csv", index=False)
-
-    return enrichment_results
-
-def parse_and_save_results(enrichment_results, output_prefix):
-    filtered_results = enrichment_results[
-        (enrichment_results["p_value"] <= 0.05) &
-        (enrichment_results["source"].isin(["GO:BP", "GO:MF", "GO:CC", "KEGG", "HP"]))
-    ]
-    
-    sorted_results = filtered_results.sort_values("p_value")
-
-    # Save all significant categories to a new CSV file
-    sorted_results.to_csv(f"{output_prefix}_significant_enrichment_categories.csv", index=False)
-
-    # Save all significant categories to a new Excel file
-    sorted_results.to_excel(f"{output_prefix}_significant_enrichment_categories.xlsx", index=False)
-
-    return sorted_results
-
-# Set up command-line argument parsing
-parser = argparse.ArgumentParser(description="Run g:Profiler and parse enrichment analysis results")
-parser.add_argument("gene_list_file", help="Input file containing the list of genes")
-parser.add_argument("output_prefix", help="Output file prefix for significant enrichment categories")
-
-args = parser.parse_args()
-
-# Read the gene list from the input file
-genes = read_gene_list(args.gene_list_file)
-
-# Run g:Profiler and save the raw results
-enrichment_results = run_gprofiler(genes, args.output_prefix)
-
-# Parse the results and save significant categories
-significant_categories = parse_and_save_results(enrichment_results, args.output_prefix)
-
-# Display significant categories
-print(significant_categories)
+ml bio/vcftools/0.1.16
+vcftools -vcf path/to/variantfile.vcf --positions low_impact.pos.txt --max-missing 1 --recode --out low_impact
+vcftools -vcf path/to/variantfile.vcf --positions moderate_impact.pos.txt --max-missing 1 --recode --out moderate_impact
+vcftools -vcf path/to/variantfile.vcf --positions high_impact.pos.txt --max-missing 1 --recode --out high_impact
 ```
