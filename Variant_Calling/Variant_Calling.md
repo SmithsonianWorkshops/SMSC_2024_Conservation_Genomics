@@ -3,7 +3,7 @@
 <!-- TOC depthFrom:2 -->
 
  * [Folder structure](#Folder-structure)
- * [Runing Minimap2](#Runing-Minimap2)
+ * [Runing BWA](#Runing-BWA)
  * [Input files](#Input-file)
  * [Map to the reference genome](#Map-to-the-reference-genome)
  * [The Genome Analysis Toolkit (GATK)](#The-Genome-Analysis-Toolkit-(GATK))
@@ -60,8 +60,28 @@ We will also need the Illumina data (fastq) for our 3 Guam Rail individuals this
 
 ### Map to the reference genome
 
-The first step to call for variants is to map the raw data from all of our individuals to our reference genome. Similar to yesterday, we will use minimap2 and samtools to map and convert from SAM file to BAM file. SAM files are tab-delimited text files that are usually very large in size. To save space and make it easy for software to hand large aliments, SAM is usually converted to a binary format BAM. 
+The first step to call for variants is to map the raw data from all of our individuals to our reference genome. Similar to yesterday, we will use bwa and samtools to map and convert from SAM file to BAM file. SAM files are tab-delimited text files that are usually very large in size. To save space and make it easy for software to hand large aliments, SAM is usually converted to a binary format BAM. 
 
+First copy the reference genome into your variant_calling structure
+
+```
+cp /data/genomics/workshop/smsc_2024/Guam_Rail_assembly/bHypOws_hifiasm.bp.p_ctg.fasta variant_calling/
+```
+
+#### Job file: bwa_index_guamRail.job
+- Queue: medium time, high-CPU
+- PE: multi-thread
+- Number of CPUs: 10
+- Memory: 6G (6G per CPU, 60G total)
+- Module: 
+```
+module load bio/bwa
+```
+- Commands:
+
+```
+bwa index variant_calling/bHypOws_hifiasm.bp.p_ctg.fasta
+```
 
 #### Job file: minimap_pop_clouded_leopard.job
 - Queue: medium time, high-CPU
@@ -70,7 +90,10 @@ The first step to call for variants is to map the raw data from all of our indiv
 - Memory: 6G (6G per CPU, 60G total)
 - Module: 
 ```
-module load bio/minimap2
+module load bio/bwa
+module load bio/samtools
+module load bio/picard
+module load bio/gatk
 ```
 - Commands:
 
