@@ -1,308 +1,435 @@
-# Population Genomics - SMSC (Day 5)
+# PCA and Admixture 
 
-<!-- TOC depthFrom:2 -->
+PCA and Admixture are both ways to investigate population structure. 
 
- * [Population Structure: Running A Principal Componet Analysis](#Population-Structure:-Running-A-Principal-Componet-Analysis)
+## Load data
+
+First, we will investigate population structure using principal component analysis. 
+
+- PCA aims to identify the main axes of variation in a dataset with each axis being independent of the next. The first component summarizes the major axis variation and the second the next largest, and so on, until all the cummulative variation is explained. 
+- For genomic data, PCA summarizes the major axes of variation in allele frequencies 
+
+To perform PCA, we will use plink, specifically version... 
+
+## Setting us up for analyses
+
+First, lets make a new directory for our analyses. 
+
+```
+mkdir /scratch/genomics/YOURNAME/smsc_2024/pop_structure/
+mkdir /home/YOURNAME/smsc_2024/day5
+```
+
+Next, we will copy all of the already written scripts into this folder so we can slightly alter it: 
+```
+cp /data/genomics/workshops/smsc_2024/scripts_Day4/*.sh /home/YOURNAME/smsc_2024/day5
+```
+
+## Filtering our raw VCF file 
+
+### Check for missingness per individual
+
+First, we need to check out raw VCF file and filter our raw VCF file to contain high quality SNPs. That is, SNPs that we are confident that are correct. 
+
+
+To do this, we will use VCFtools, which is a very common program used to filter variants and samples in our dataset. 
+
+
+First,  we will check to see the missingness per individual in our raw VCF file. 
+
+To do this, we will work with the `01_checkmissingness.job` file. 
+
+
+Submit the script: 
+```
+qsub 01_checkmissingness.job
+```
+Let's look at the file to go over what the script is doing: 
+```
+# /bin/sh                                                                                                                                                                 
+# ----------------Parameters---------------------- #                                                                                                                      
+#$ -S /bin/sh                                                                                                                                                             
+#$ -q sThC.q                                                                                                                                                              
+#$ -l mres=10G,h_data=5G,h_vmem=5G                                                                                                                                        
+#$ -cwd                                                                                                                                                                   
+#$ -j y                                                                                                                                                                   
+#$ -N missingness                                                                                                                                                              
+#$ -o missingness.log                                                                                                                                          
+#----------------Modules------------------------- #                                                                                                                       
+module unload gcc/8.5.0
+module load bio/vcftools
+# ----------------Your Commands------------------- #                                                                                                                      
+#                                                                                                                                                                         
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                             
+#                                                                                                                                                                         
+# $SGE_TASK_ID is the value of the task ID for the current task in the array                                                                                              
+# write out the job and task ID to a file                                                                                                                                 
+#                                                                                                                                                                        
+VCF=/data/genomics/workshops/smsc_2024/VCF/gatk_allsamples_ptg000001l.vcf                                                                   
+#    
+
+vcftools --vcf ${VCF} \
+--missing-indv
+echo = `date` job $JOB_NAME done
+
+```
+
+This will output a file called `imiss.out`
+
+Let's open that file to look at the results: 
+```
+less imiss.out
+```
+Here's the output: 
+```
+INDV    N_DATA  N_GENOTYPES_FILTERED    N_MISS  F_MISS                                                                     
+Atlantisia_rogersi      10741317        0       2706    0.000251924                                                        
+Fulica_atra     10741317        0       175     1.62922e-05                                                                
+Grus_americana  10741317        0       9061    0.000843565                                                                
+GuamRail_HOW_N23_0063   10741317        0       10      9.30985e-07                                                        
+GuamRail_HOW_N23_0068   10741317        0       14      1.30338e-06                                                        
+Heliornis_fulica        10741317        0       35441   0.0032995                                                          
+Laterallus_jamaicensis_coturniculus     10741317        0       28803   0.00268151                                         
+Porphyio_hochstetteri   10741317        0       11989   0.00111616                                                         
+Rallus_limicola 10741317        0       2095    0.000195041                                                                
+Zapornia_atra   10741317        0       175     1.62922e-05                                                                
+
+```
+
+All of our samples have at least 99% of the some SNPs information at each position of the VCF file. This is great! 
+
+### Filtering to keep best quality SNPs
+
+
+Next, we will filter the raw VCF to keep the best quality SNPs and remove indels. We will use the script below with VCFtools. 
+
+Open the file:
+```
+vim 02_FilterSNPs.sh
+```
+Change YOURNAME to yourname:
+```
+vim 01_vcftoolsfilter.job
+press i
+change YOURNAME to your name
+Shift x
+```
+
+Submit the script: 
+```
+qsub 02_vcftoolsfilter.job
+```
+
+Let's see what the script is doing:
  
-<!-- /TOC -->
-
-
-### Population Structure: Running A Principal Componet Analysis
-
-Now we have a full filtered VCF file with variants for our seven Clouded Leopards. Now we will investigate population structure using principal components analysis. Examining population structure can give us insight into the origin and history of populations. PCA is a Model-free method used to assess population structure and ancestry.
-
-PCAs identify the main axes of variation in a dataset. In the context of genomic data, PCA summarizes the major axes of variation in allele frequencies and then produces the coordinates of individuals along these axes.
-
-To calculate our PCA, we are going to use a very versatile program called PLINK. PLINK was designed for whole genome association analysis and is powderful and easy to use.
-
-Before running PLINK we need to prepare our data so that it doesn't violate assumptions for PCA analysis. The most important assumption is that every SNP is independent. This is clearly not the case for genomic data sets since allele frequencies are correlated due to physical linkage. So we need to first prune variants that are in physical linkage.
-
-Let's change directory to our pop_genomics folder and copy the variant calling file (vcf) to this folder. The file is located here: 'pool/genomics/ariasc/SMSC_2023/mapping/raw_c_leopard_vcf/clouded_leopard_data.vcf'
-
-PLINK is very fast so we do not need to set up a job. We will be using an interactive node.
-
 ```
-qrsh
-module load bio/plink/
-plink --vcf clouded_leopard_data.vcf --double-id --allow-extra-chr --set-missing-var-ids @:# --indep-pairwise 50 10 0.1 --out clouded_leopard_plink
-```
+# /bin/sh                                                                                                                                                                 
+# ----------------Parameters---------------------- #                                                                                                                      
+#$ -S /bin/sh                                                                                                                                                             
+#$ -q sThC.q                                                                                                                                                              
+#$ -l mres=10G,h_data=5G,h_vmem=5G                                                                                                                                        
+#$ -cwd                                                                                                                                                                   
+#$ -j y                                                                                                                                                                   
+#$ -N Filter                                                                                                                                                              
+#$ -o vcftoolsfilter.log                                                                                                                                          
+#----------------Modules------------------------- #                                                                                                                       
+module unload gcc/8.5.0
+module load bio/vcftools
+# ----------------Your Commands------------------- #                                                                                                                      
+#                                                                                                                                                                         
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                             
+#                                                                                                                                                                         
+# $SGE_TASK_ID is the value of the task ID for the current task in the array                                                                                              
+# write out the job and task ID to a file                                                                                                                                 
+#                                                                                                                                                                         
+VCF=/data/genomics/workshops/smsc_2024/VCF/gatk_allsamples_ptg000001l.vcf                                                                      
+OUT=/scratch/genomics/YOURNAME/smsc_2024/pop_structure/gatk_allsamples_ptg000001l_filtered                                                                  
+#    
 
-##### Explanation:
-
-```
---vcf: Path to the input VCF file.
---double-id: this tells PLINK to set both the family ID and the within-family ID to be set to the sample ID (it's sort of trying to reconstruct a pedigree)
---allow-extra-chr: allow additional chromosomes beyond the human chromosome set. PLINK by default expectes that the data is human (i.e. chromosomes 1-22 and X chromosome).
---set-missing-var-ids: also necessary to set a variant ID for our SNPs. Human datas sets often have annotated SNP names and so plink will look for these. We do not have them so instead we set ours to default to chromosome:position which can be achieved in plink by setting the option @:#.
---indep-pairwise: This is the command that performes the linkage pruning. The first argument, 50 denotes we have set a window of 50 Kb. The second argument, 10 is our window step size - meaning we move 10 bp each time we calculate linkage. Finally, we set an r2 threshold - i.e. the threshold of linkage we are willing to tolerate. Here we prune any variables that show an r2 of greater than 0.1.
+vcftools --vcf ${VCF} --minQ 30 --remove-indels --max-missing 0.8 \
+--remove-indv Grus_americana --remove-indv Fulica_atra --remove-indv Heliornis_fulica --recode --recode-INFO-all \
+--out ${OUT}
 
 ```
 
-Now we run our PCA analysis with PLINK using the following command.
+Specifically, these filters are
+
+- minQ 30 --> keep sites that have at least a minimum quality score of 30. This means we think think the base quality accuracy at this position is 99.9% correct. 
+- remove-indels --> this removes indels, which are short insertions and deletions. For hte rest of our analyses, we are just interested in SNPs. 
+- max-missing 0.8 --> keep positions where there is data for at least 80% of individuals 
+
+
+This step will take a couple of minutes. 
+Let's compare the output files from the raw VCF and our filtered VCF: 
+```
+From our unfiltered dataset, we had 10741317 SNPs, as we can see from the imiss file. 
+
+less /data/genomics/workshops/smsc_2024/Results/filterVCF.log 
+
+It states "After filtering, kept 8740710 out of a possible 10741317 Sites"
+```
+We can see the filtering worked! 
+
+
+
+### Use PLINK to remove linked sites
+
+Plink (https://zzz.bwh.harvard.edu/plink/) is a commonly used program to do conduct various population genomic analyses. Mainly, people use it for doing PCA, make input files for other programs, and quantify relatedness. 
+
+
+An assumption of PCA is that we use independent data -- that is no spurious correlations amont the measured variables. 
+- For genomic data, allele frequencies can be correlated due to physical linkage 
+
+First we will open the plink script and change to your name:
 
 ```
-plink --vcf clouded_leopard_data.vcf --double-id --allow-extra-chr --set-missing-var-ids @:# \
---extract clouded_leopard_plink.prune.in \
---make-bed --pca --out clouded_leopard_pca
+vim 03_removeLD.job
+press i
+change YOURNAME to your name
+Shift x
 ```
 
-##### Explanation:
+Then we will submit the job: 
+```
+qsub 03_removeLD.job
+```
+This the script below to see what's its doing: 
 
 ```
---extract: this tells PLINK to extract only these positions from our VCF.
---make-bed: this is to produce and output the file that we will use in our next population analysis (model based approach with admixture).
---pca: this tells PLINK to calculate a principal components analysis.
+# /bin/sh                                                                                                                                                                 
+# ----------------Parameters---------------------- #                                                                                                                      
+#$ -S /bin/sh                                                                                                                                                             
+#$ -q sThC.q                                                                                                                                                              
+#$ -l mres=10G,h_data=5G,h_vmem=5G                                                                                                                                        
+#$ -cwd                                                                                                                                                                   
+#$ -j y                                                                                                                                                                   
+#$ -N plinkLD                                                                                                                                                              
+#$ -o plinkLD.log                                                                                                                                          
+#----------------Modules------------------------- #                                                                                     
+
+module load bio/plink/1.90b7.2
+# ----------------Your Commands------------------- #                                                                                                                      
+#                                                                                                                                                                         
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                             
+#                                                                                                                                                                         
+# $SGE_TASK_ID is the value of the task ID for the current task in the array                                                                                              
+# write out the job and task ID to a file                                                                                                                                 
+#                                                                                                                                                                         
+VCF=/data/genomics/workshops/smsc_2024/VCF/gatk_allsamples_ptg000001l_filtered.recode.vcf                                                                    
+OUT=/scratch/genomics/YOURNAME/smsc_2024/pop_structure/gatk_allsamples_ptg000001l_filtered_LD
+
+FINAL=/scratch/genomics/YOURNAME/smsc_2024/pop_structure/gatk_allsamples_ptg000001l_filtered_prunedLD
+#    
+
+plink --vcf ${VCF} --indep-pairwise 50 5 0.5 --out ${OUT} --const-fid 0 --allow-extra-chr
+
+
+plink --vcf ${VCF}  --extract ${OUT}.prune.in  --out ${FINAL} --recode --const-fid 0 --dog --allow-extra-chr
+
+
+echo = `date` job $JOB_NAME done
+
+```
+
+Let's look at the plink output files to understand the file structure: 
+
+```
+less /data/genomics/workshops/smsc_2024/Results/gatk_allsamples_ptg000001l_filtered_prunedLD.map
+
+less -S /data/genomics/workshops/smsc_2024/Results/gatk_allsamples_ptg000001l_filtered_prunedLD.ped
 
 ```
 
 
-##### Dowload files to your machine
+## PCA!!!!!!! 
 
-after the command finishes, find the results and download the following two files to your local machine:
+Woo! Now we can make our PCA :) We will use plink to infer the PCA. 
+
+
+First we will open the plink script and change to your name:
+
+Then we will submit the job: 
+```
+qsub 04_runPCA.job
+```
+This the script below to see what's its doing: 
+```
+# /bin/sh                                                                                                                                                                 
+# ----------------Parameters---------------------- #                                                                                                                      
+#$ -S /bin/sh                                                                                                                                                             
+#$ -q sThC.q                                                                                                                                                              
+#$ -l mres=10G,h_data=5G,h_vmem=5G                                                                                                                                        
+#$ -cwd                                                                                                                                                                   
+#$ -j y                                                                                                                                                                   
+#$ -N runPCA                                                                                                                                                              
+#$ -o runPCA.log                                                                                                                                          
+#----------------Modules------------------------- #                                                                                     
+
+module load bio/plink/1.90b7.2
+# ----------------Your Commands------------------- #                                                                                                                      
+#                                                                                                                                                                         
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                             
+#                                                                                                                                                                         
+# $SGE_TASK_ID is the value of the task ID for the current task in the array                                                                                              
+# write out the job and task ID to a file                                                                                                                                 
+#                                                                                                                                                                         
+FILE=/data/genomics/workshops/smsc_2024/Results/gatk_allsamples_ptg000001l_filtered_prunedLD_rails                                                                    
+#    
+
+plink --file ${FILE} --pca var-wts  --const-fid 0 --allow-extra-chr
+
+
+echo = `date` job $JOB_NAME done
 
 ```
-clouded_leopard_pca.eigenval  
-clouded_leopard_pca.eigenvec
-```
 
-Remember to use ffsend. Tip: You need to load the module ```bioinformatics/ffsend``` and then used the command ```ffsend upload <FILE>```.
-
-### Visualizing results in R and Rstudio
-
-Now that we have the files on our machines lets plot our PCA results. For this we will use R and Rstudio.
-The first step is to create an Rstudio project where you will performe your analysis. In your R studio project, open a new Rmarkdown document or an R script to write and comment your R commands. You can also move the results files from PLINK to your project folder.
-
-First let's load the tidyverse library. This library is very powerful and has many functions to manipulate data in R.
+Let's look at the output: 
 
 ```
-library (tidyverse)
+less plink.eigenvec #Principal components
+less plink.eigenval #tells us the contribution of each PC in explaining the variation
 ```
 
-Now lets read our data using the read table function.
+We will now open this in R to plot. Put the file "PCA_rails.csv" into your R directory
+```
+#in R
+install_packages("ggplot2")
+library(ggplot2)
+install.packages("ggrepel")
+library(ggrepel)
+
+#Read in data 
+dat <- read.csv ("PCA_rails.csv", header=TRUE)
+
+#plot graph                                      
+p <- ggplot(dat,aes(x=PC1,y=PC2,label=Name, color=Name)) + geom_point(size = 3) + theme_classic()  +
+  geom_text_repel()
+p
+
+#plot Eigenvalues 
+
+Eigenvalues <- c(0.44, .28, .18, .08, .013, .004, -0.0018)
+barplot(Eigenvalues)
+
 
 ```
-pca <- read_table2("clouded_leopard_pca.eigenvec", col_names = FALSE)
-eigenval <- scan("clouded_leopard_pca.eigenval")
-```
-Next, we need to start cleaning our data frame table. Look at your data frame. We will delete duplicated columns (i.e. individual ID) and also we will give a proper name to the columns in the pca data frame.
+
+# Individual Admixture Proportions with Admixture 
+
+Now we can infer individual admixture proportions with Admixture. This is a genetic clustering program to define populations and assign individuals to them.  
+
+We will use the plink files we just make to run Admixture. 
 
 ```
-pca <- pca[,-1] #deletes first column
-
-#set names
-names(pca)[1] <- "ind"
-names(pca)[2:ncol(pca)] <- paste0("PC", 1:(ncol(pca)-1))
+qsub 05_Admixture.job
 ```
 
-Let's now organize each individual by its name and its population/species.
-For this you will create some vectors that will hold that information (i.e. nm for name and pop for population).
+Here is the script: 
 
 ```
-# name
-nm <- rep(NA, length(pca$ind))
-nm[grep("NN114296", pca$ind)] <- "pepe"
-nm[grep("NN114297", pca$ind)] <- "rosa"
-nm[grep("NN114393", pca$ind)] <- "shakiral"
-nm[grep("NN115950", pca$ind)] <- "carlos"
-nm[grep("NN190240", pca$ind)] <- "mike"
-# population
-pop <- rep(NA, length(pca$ind))
-pop[grep("NN114296", pca$ind)] <- "cl"
-pop[grep("NN114297", pca$ind)] <- "cl"
-pop[grep("NN114393", pca$ind)] <- "cl"
-pop[grep("NN115950", pca$ind)] <- "cl"
-pop[grep("NN190240", pca$ind)] <- "cl"
-```
-if you want to plot later with different colors and separated by both color and population you can create a third vector:
+
+# /bin/sh                                                                                                                                                               
+# ----------------Parameters---------------------- #                                                                                                                    
+#$ -S /bin/sh                                                                                                                                                           
+#$ -pe mthread 5                                                                                                                                                        
+#$ -q lThM.q                                                                                                                                                            
+#$ -l mres=10G,h_data=5G,h_vmem=5G,himem                                                                                                                                
+#$ -cwd                                                                                                                                                                 
+#$ -j y                                                                                                                                                                 
+#$ -N Admixtureloop                                                                                                                                                     
+#$ -o Admixtureloop.log                                                                                                                                                 
+#                                                                                                                                                                       
+# ----------------Modules------------------------- #                                                                                                                    
+module load bio/admixture/1.3.0                                                                                                                                         
+module load bio/plink/1.90b7.2                                                                                                                                          
+#                                                                                                                                                                       
+# ----------------Your Commands------------------- #                                                                                                                    
+#                                                                                                                                                                       
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                           
+echo + NSLOTS = $NSLOTS                                                                                                                                                 
+#                                                                                                                                                                       
+#                                                                                                                                                                       
+INPUT=/data/genomics/workshops/smsc_2024/Results/gatk_allsamples_ptg000001l_filtered_prunedLD_rails                                                                     
+OUTPUT=/data/genomics/workshops/smsc_2024/Results/gatk_allsamples_ptg000001l_filtered_prunedLD_rails_bed                                                                
+#                                                                                                                                                                       
+#plink --file ${INPUT} --make-bed --allow-extra-chr --const-fid 0 --out ${OUTPUT}                                                                                       
+#                                                                                                                                                                       
+FILE=/data/genomics/workshops/smsc_2024/Results/gatk_allsamples_ptg000001l_filtered_prunedLD_rails_bed.bed                                                              
+                                                                                                                                                                        
+for i in {2..5}                                                                                                                                                         
+do                                                                                                                                                                      
+admixture --cv ${FILE} $i > log${i}.out                                                                                                                                 
+done                                                                                                                                                                    
+#                                                                                                                                                                       
+echo = `date` job $JOB_NAME done                                                                                                                                        
+#                                                                                                                                                                       
 
 ```
-nm_pop <- paste0(nm, "_", pop)
+
+This takes a while to finish. We can look at the output files here: 
+```
+less /data/genomics/workshops/smsc_2024/Results/gatk_allsamples_ptg000001l_filtered_prunedLD_rails_bed.2.Q
 ```
 
-After creating these variables you can reorganize your dataframe into a new one.
+And now we can plot the data: 
 
 ```
-pca2 <- as.tibble(data.frame(pca, nm, pop, nm_pop))
-```
-To plot the percentage of variance explained by each principal component you need to convert your eigenvalues into percentages and create a new dataframe.
-
-```
-pve <- data.frame(PC = 1:5, pve = eigenval/sum(eigenval)*100)
-```
-
-Now that we have done our cleaning, we can plot our eignvalues and PCA.  
-First we will plot the eigenvalues. 
-```
-plot_pve <- ggplot(pve, aes(PC, pve)) + geom_bar(stat = "identity")
-plot_pve <- plot_pve  + ylab("%  of variance expl") +
-theme_classic()
-plot_pve
-```
-Cumulatively, as you can see the five PC explain 100% of the variance, but PC1 and PC2 explain about 58% of the variance. We could calculate this formally  with the cumsum function, like this:
-
-```
-cumsum_cal<-cumsum(pve$pve)
-cumsum_cal
-```
-
-Finally let's plot PC1 and PC2. The way to interpret this result is that the closer the dots, more similar the individuals are.
-
-```
-pca_plot <- ggplot(pca2, aes(PC1, PC2, col = nm, shape = pop)) + geom_point(size = 3)
-pca_plot <- pca_plot + scale_colour_manual(values = c("red", "blue", "green", "purple","black"))
-pca_plot <- pca_plot + coord_equal() + theme_light()
-pca_plot <- pca_plot + xlab(paste0("PC1 (", signif(pve$pve[1], 3), "%)")) + ylab(paste0("PC2 (", signif(pve$pve[2], 3), "%)"))
-pca_plot
-```
-
- * What will happen if you plot other PCs?
- * Play with the colors and change the names?
- 
-### Challenge
-
-Let's play now with another and more complex file. I have one of my data files, this represents an ample sampling of close to 60 individuals of Brachyhypopomus occidentalis across all of his natural range (From Venezuela, Costa Rica).
-
-
-Try to run the same commands but with this data set: /pool/genomics/ariasc/SMSC_2023/mapping/efish_vcf/
-
-
-<details><summary>SOLUTION</summary>
-<p>
-
-##### Plink Commands
-```
-# perform linkage pruning - i.e. identify prune sites
-plink --vcf ../efish.vcf --double-id --allow-extra-chr  --set-missing-var-ids @:#  --indep-pairwise 50 10 0.1 --out efish
-
-# prune and create pca
-plink --vcf ../efish.vcf --double-id --allow-extra-chr --set-missing-var-ids @:# --extract efish.prune.in --make-bed --pca --out efish
-
-```
- 
-#### R plotting Commands
-
-```
-# load tidyverse package
 library(tidyverse)
-# read in data
-pca <- read_table2("efish.eigenvec", col_names = FALSE)
-eigenval <- scan("efish.eigenval")
+library(dplyr)
+library (ggplot2)
 
-# sort out the pca data
-# remove nuisance column
-pca <- pca[,-1]
-# set names
-names(pca)[1] <- "ind"
-names(pca)[2:ncol(pca)] <- paste0("PC", 1:(ncol(pca)-1))
-#population map
-pop_map<- read.delim("pop_map4.txt", header = T)
+###################
+# Results at K=2 ##
+###################
+dat <-read.csv ("Admixture_K2.csv", header=TRUE)
 
-# first convert to percentage variance explained
-pve <- data.frame(PC = 1:20, pve = eigenval/sum(eigenval)*100)
+## Organize the dataset
+data_long <- gather(dat, Admixture, Percentage, Ancestry1:Ancestry2, factor_key=TRUE)
 
-# make plot for eigenvalues
-pve_plot <- ggplot(pve, aes(PC, pve)) + geom_bar(stat = "identity")
-pve_plot + ylab("Percentage variance explained") + theme_light()
+# Plot admixture at K=2
+q <- ggplot(data_long, aes(fill=Admixture, y=Percentage, x=Sample)) + 
+    geom_bar(position="stack", stat="identity") +scale_fill_manual(values = c("mediumseagreen","maroon4", "orange2", "royalblue4", "red", "honeydew4"))  + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+q
 
-# calculate the cumulative sum of the percentage variance explained
-cumsum(pve$pve)
+###################
+# Results at K=3 ##
+###################
+dat <-read.csv ("Admixture_K3.csv", header=TRUE)
 
-#join tables to be able to annotated your figure 
-PCA_joined_popm <- left_join(pca, pop_map, by = c("ind" = "ind"))
+## Organize the dataset
+data_long <- gather(dat, Admixture, Percentage, Ancestry1:Ancestry3, factor_key=TRUE)
 
-# location column shoul be read as factor
-PCA_joined_popm$loc <- as.factor(PCA_joined_popm$loc)
+# Plot admixture at K=2
+q <- ggplot(data_long, aes(fill=Admixture, y=Percentage, x=Sample)) + 
+    geom_bar(position="stack", stat="identity") +scale_fill_manual(values = c("mediumseagreen","maroon4", "orange2", "royalblue4", "red", "honeydew4"))  + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+q
 
-# merge into an new table
-PCA_joined_popm <- merge(pca, pop_map, by.x = "ind",  by.y = "ind", all.x = TRUE, all.y = F)
+###################
+# Results at K=4 ##
+###################
+dat <-read.csv ("Admixture_K4.csv", header=TRUE)
 
-#check the levels on localitie column
-levels(PCA_joined_popm$loc)
+## Organize the dataset
+data_long <- gather(dat, Admixture, Percentage, Ancestry1:Ancestry4, factor_key=TRUE)
 
-#establish color to be used for each population with a vector
-cols <- c("Atrato"= "#009E73","Bayano"="#56B4E9","Bocas" ="#CC79A7","Calovebora"= "brown","CanalZone"="#B6DBFF","Cocle"="#F0E442","Darien"="#882255","GunaYala"="#7F7F7F", "Orinoco"="darkgreen", "SanJuan"= "green", "Lajas"="#999933")  
+# Plot admixture at K=4
+q <- ggplot(data_long, aes(fill=Admixture, y=Percentage, x=Sample)) + 
+    geom_bar(position="stack", stat="identity") +scale_fill_manual(values = c("mediumseagreen","maroon4", "orange2", "royalblue4", "red", "honeydew4"))  + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+q
 
-# perhaps, you can have two vectors with different colors assigments
-cols2 <- c("Bocas" ="#E69F00","Calovebora"= "#999933","Santa_Maria"="deepskyblue","Cocle"="red2","Chagres"="khaki4","GunaYala"="#7F7F7F","Bayano"="#CC79A7", "Darien"="darkgreen","P_Col"= "blueviolet", "Venezuela"="red4")  
+###################
+# Results at K=5 ##
+###################
+dat <-read.csv ("Admixture_K5.csv", header=TRUE)
 
-#create a vector with text levels for each populatio
+## Organize the dataset
+data_long <- gather(dat, Admixture, Percentage, Ancestry1:Ancestry5, factor_key=TRUE)
 
-L_labels= c("Bocas" ="Bocas (W.Pan.)", "Calovebora"="Calovebora (C.Pan)", "Santa_Maria"="Santa Maria (C.Pan)",  "Cocle"="Cocle Norte (N.Pan)",  "Chagres"="Chagres (C.Pan)","GunaYala"="GunaYala (N.Pan)","Bayano"="Bayano (E.Pan)", "Darien"="Darien (E.Pan)", "P_Col"= "Pacific Col", "Venezuela"="Venezuela") 
-
-# plot pca
-library("ggplot2")
-b <- ggplot(PCA_joined_popm, aes(PC1, PC2, col = loc)) + geom_point(size = 3, alpha=0.6)
-b <- b + scale_colour_manual(values =cols2, name="Localities", labels=L_labels)
-b <- b + coord_equal() + theme_light()
-b <- b + xlab(paste0("PC1 (", signif(pve$pve[1], 3), "%)")) + ylab(paste0("PC2 (", signif(pve$pve[2], 3), "%)"))
-b
-
-# Save file as PNG
-ggsave(b, file="PCA_efish2.png", dpi = 300)
-
-
-```
-</p>
-</details>
- 
-#### Running ADMIXTURE
-
-ADMIXTURE is a model-based program that calculates individual and population ancestries.
-
-To run admixture, let's keep using the electric fish data set. Admixture can use as input some of the files generated by PLINK (bed and bim files) in our previous analysis. Admixture reads bed files (A PLINK bed file is a binary biallelic genotype table) and uses information collected on the bim file too. However, since PLINK was developed to work with human genomes, we need to do some cleaning. We need to change the first column of the bim file with a O. We will used the next 'awk' command and them rename our bim file to match the name on our bed file.
-
-```
-awk '{$1=0;print $0}' efish.bim > efish.bim.tmp
-mv efish.bim.tmp efish.bim
-```
-Once we have our new bim corrected file,  we can run admixture. Let's again use an interactive node and call the admixture module. 
-
-```
-qrsh
-module load bio/admixture
-admixture --cv efish.bed 2 > log2.out
-```
-
-The previous admixture command tests ancestry specifically assuming that there were two genomic clusters. We now need to test admixture and acestry on a range of K values to compare and see which K value fits our dataset better. Since this is a very simple command we can use a for loop that iterates K values and gathers the results in different log files.
-
-```
-#Running a loop for different K
-
-#!/bin/sh
-for i in {2..15}
-do
-admixture --cv efish.bed $i > log${i}.out
-done
-```
-Admixture produced 2 files. A .Q file, which contains cluster assignments for each individual and, a .P file , which contains the population allele frequencies for each SNP. Lets use grep and awk together to identify the best value of K clusters. The best value of K will be the lowest cross-validation error. Thus, we need to collect the cv errors. Below are three different ways to extract the number of K and the CV error for each corresponding K. 
-
-```
-grep "CV" *out | awk '{print $3,$4}' | sed -e 's/(//;s/)//;s/://;s/K=//'  > efish.cv.error
-#grep "CV" *out | awk '{print $3,$4}' | cut -c 4,7-20 > efish.cv.error
-#awk '/CV/ {print $3,$4}' *out | cut -c 4,7-20 > efish.cv.error
-```
-
-* which is the best K for this data?
-
-
-We also need to extract a list of the individuals used in the analysis. This will later help when plotting the results.
-
-```
-#list of individuals in the analysis
-awk '{split($1,name,"."); print $1,name[2]}' efish.nosex > efish.list
+# Plot admixture at K=4
+q <- ggplot(data_long, aes(fill=Admixture, y=Percentage, x=Sample)) + 
+    geom_bar(position="stack", stat="identity") +scale_fill_manual(values = c("mediumseagreen","maroon4", "orange2", "royalblue4", "red", "honeydew4"))  + theme(axis.text.x = element_text(angle = 90, hjust = 1))
+q
 
 ```
 
-### Plotting admixture results in R.
-
-Download to your machine the .Q file for the best number of clusters and use the next script to plot your results. Also download the .list file
-
-
-```
-# read .Q file
-tbl<-read.table("efish.10.Q")
-#Simple plot
-barplot(t(as.matrix(tbl)), col=rainbow(10),
-               xlab="Individual #", ylab="Ancestry", border=NA)
-
-```
+And we're done!
