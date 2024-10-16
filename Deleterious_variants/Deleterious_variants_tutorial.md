@@ -92,6 +92,13 @@ vep -i GuamRails_ptg000009l_SNPs.recode.vcf --fork 8 --offline --gff Guam_rail.w
 ### 1. Familiarize yourself with the output
 If VEP worked, it will produce two or three output files: vep_rail.txt, vep_rail.txt_summary.html and possibly vep_rail.txt_warnings.txt. The first file contains the raw output. The second file contains a neat summary suitable to open in a web browser (if the hydra cluster doesn't support opening this file, one option is to save the file locally on your laptop). (A copy of the summary file can be found [HERE](https://github.com/SmithsonianWorkshops/SMSC_2024_Conservation_Genomics/blob/main/Deleterious_variants/vep_GuamRails_summary.html)). The third file shows any warnings, for example if there are annotations in the gff file not recognized by VEP.
 
+==Copy the file to your computer==
+Open a terminal on your ON computer (not connected to hydra) and type 
+```bash
+scp YOUR_USER@160.111.215.42://scratch/genomics/YOUR_FOLDER/Deleterious/vep_rail.txt_summary.html .
+```
+(Replace YOUR_USER and YOUR_FOLDER to your own username and folder name) 
+
 _For all the commands below, make it a habit of looking at the output files, for example with `less`!_
 
 All the information in the summary can also be found in the raw output. We can use a variety of unix tools to check it out:
