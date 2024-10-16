@@ -28,7 +28,7 @@ Paths to files:
 # Annotation file in gff format
 /data/genomics/workshops/smsc_2024/Guam_rail_assembly/Guam_rail.gff
 # Variation data for our resequenced individuals in vcf format
-/data/genomics/workshops/smsc_2024/???/gatk_GuamRails_autosomes_header.vcf
+/data/genomics/workshops/smsc_2024/VCF/gatk_GuamRails_autosomes_header.vcf
 ```
 #### a) Create a directory to work in
 ```bash
@@ -40,7 +40,7 @@ cd Deleterious
 Vep requires that exons are annotated. Since our annotation file lacks exons, we will duplicate the CDS annotation and just replace the "CDS" with "exon" before we index the file:
 ```bash
 # Tabix should be included in the vep module
-ml bio/ensembl-vep
+module load bio/ensembl-vep
 # Sort file and add exons before compressing
 grep -v "#" /data/genomics/workshops/smsc_2024/Guam_rail_assembly/Guam_rail.gff | \
 sort -k1,1 -k4,4n -k5,5n -t$'\t' | \
@@ -63,7 +63,7 @@ This code should be placed in a script and run as a job. It took around ~30 min 
 
 ```bash
 # Load ensembl module
-ml bio/ensembl-vep
+module load bio/ensembl-vep
 # Run vep
 vep -i GuamRails_SNPs.recode.vcf --fork 8 --offline --gff Guam_rail.withExons.gff.gz \
  --fasta bHypOws1_hifiasm.bp.p_ctg.fasta -o vep_rail.txt --species gallus_gallus --force_overwrite
@@ -250,7 +250,7 @@ Do you see a difference between the individuals? Or a difference between 'HIGH' 
 Remenber, this is just a very rough estimation of genetic load! Apart from finding the correct deleterious allele (which we ignored above), it might be necessary to account for differences in sequencing (if some individuals have more missing data, for example). One way to do this is to calculate load as the number of deleterious alleles per genotyped sites.  
 
 
-This is the end of this tutorial! For the interested there are some extra information and code below. 
+This is the end of this tutorial! For the interested there are some extra information and code below.
 
 ---------
 ### *About finding out which allele is deleterious
