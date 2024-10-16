@@ -29,18 +29,31 @@ Paths to files:
 /data/genomics/workshops/smsc_2024/Guam_rail_assembly/Guam_rail.gff
 # Variation data for our resequenced individuals in vcf format
 /data/genomics/workshops/smsc_2024/VCF/gatk_GuamRails_autosomes_header.vcf
+# Variation data for only one scaffold (for testing)
+/data/genomics/workshops/smsc_2024/Deleterious/GuamRails_ptg000009l.vcf
 ```
-#### a) Create a directory to work in
+#### a) Create a directory in your scratch to work in
 ```bash
+cd /scratch/genomics/YOUR_USER/
 mkdir Deleterious
 cd Deleterious
 ```
 
+The code below for step 1b, 1c and 2 can be copied from
+
+```bash
+ cp /data/genomics/workshops/smsc_2024/Deleterious/01_preparations.job .
+ cp /data/genomics/workshops/smsc_2024/Deleterious/02_vcftools.job .
+ cp /data/genomics/workshops/smsc_2024/Deleterious/03_vep.job .
+ ```
+
 #### b) Indexing the annotation file
-Vep requires that exons are annotated. Since our annotation file lacks exons, we will duplicate the CDS annotation and just replace the "CDS" with "exon" before we index the file:
+Vep requires that exons are annotated. Since our annotation file lacks exons, we will duplicate the CDS annotation and just replace the "CDS" with "exon" before we index the file.
 ```bash
 # Tabix should be included in the vep module
 module load bio/ensembl-vep
+module unload gcc/8.5.0                                                                                            
+module load bio/htslib
 # Sort file and add exons before compressing
 grep -v "#" /data/genomics/workshops/smsc_2024/Guam_rail_assembly/Guam_rail.gff | \
 sort -k1,1 -k4,4n -k5,5n -t$'\t' | \
@@ -50,12 +63,13 @@ bgzip -c >Guam_rail.withExons.gff.gz
 tabix -p gff Guam_rail.withExons.gff.gz
 ```
 
+
 #### c) Prepare the vcf file
 If we want we could just use the vcf file as it is, but we can also do some more filtering. Here I decided to remove indels, and only keep bi-allelic sites (SNPs with two alleles, not more) with no missing data:
 ```bash
 ml bio/vcftools/0.1.16
-vcftools --vcf gatk_GuamRails_autosomes_header.vcf --remove-indels  \
- --max-missing 1.0 --max-alleles 2 --recode --out GuamRails_SNPs
+vcftools --vcf /data/genomics/workshops/smsc_2024/Deleterious/GuamRails_ptg000009l.vcf --remove-indels  \
+ --max-missing 1.0 --max-alleles 2 --recode --out GuamRails_ptg000009l_SNPs
 ```
 
 ### 2. Run the variant predictor
@@ -65,11 +79,11 @@ This code should be placed in a script and run as a job. It took around ~30 min 
 # Load ensembl module
 module load bio/ensembl-vep
 # Run vep
-vep -i GuamRails_SNPs.recode.vcf --fork 8 --offline --gff Guam_rail.withExons.gff.gz \
- --fasta bHypOws1_hifiasm.bp.p_ctg.fasta -o vep_rail.txt --species gallus_gallus --force_overwrite
+vep -i GuamRails_ptg000009l_SNPs.recode.vcf --fork 8 --offline --gff Guam_rail.withExons.gff.gz \
+ --fasta bHypOws1_hifiasm.bp.p_ctg.fasta --cache /data/genomics/workshops/smsc_2024/VEP/ -o vep_rail.txt --species gallus_gallus_gca000002315v5 --force_overwrite
 #--fork 8 tells vep to use 8 cores - make sure to give it as many cores when you start the script.
 #--offline means we don't want to use the vep database but our own data
-#--species gallus_gallus means... well, we know it's not a chicken, but without this flag
+#--species gallus_gallus.. means... well, we know it's not a chicken, but without this flag
 # vep assumes a human genome, and giving it a custom name returned an error when I tested the code.
 ```
 
@@ -117,35 +131,33 @@ grep "IMPACT=MODERATE" vep_rail.txt |cut -f2 |uniq >moderate_impact.pos.txt
 ```
 Are there any sites annotated as both HIGH and MODERATE? We can check this by joining the two files:
 ```bash
-join high_impact.variants.txt moderate_impact.pos.txt
+join <(sort high_impact.pos.txt) <(sort moderate_impact.pos.txt)
 ```
 If there are, we should remove the shared variants from the less severe impact class.
 ```bash
 # Re-run extracting moderate variants, removing positions overlapping with high impact
 # join -v1 will return all lines in file 1 not overlapping with file 2.
-grep "IMPACT=MODERATE" vep_rail.txt |cut -f2 |uniq |join -v1 - high_impact.variants.txt >moderate_impact.pos.txt
+grep "IMPACT=MODERATE" vep_rail.txt |cut -f2 |uniq |join -v1 <(sort -) <(sort high_impact.pos.txt) >moderate_impact.pos.txt
 ```
 We can do the same for the LOW impact variants, removing any overlaps with either of the two previous files.
 ```bash
-grep "IMPACT=LOW" vep_rail.txt |cut -f2 |uniq |join -v1 - high_impact.pos.txt |join -v1 - moderate_impact.pos.txt >low_impact.pos.txt
+grep "IMPACT=LOW" vep_rail.txt |cut -f2 |uniq |join -v1 <(sort -) <(sort high_impact.pos.txt) |join -v1 - <(sort moderate_impact.pos.txt) >low_impact.pos.txt
 ```
 
 If we want to extract the variants from the vcf file using vcftools, we need tab separated positions files. We can use the Stream EDitor sed to replace the ":" to tabs (\t).
 ```bash
-sed -i '' 's/:/\t/g' low_impact.pos.txt
-sed -i '' 's/:/\t/g' moderate_impact.pos.txt
-sed -i '' 's/:/\t/g' high_impact.pos.txt
+sed -i 's/:/\t/g' low_impact.pos.txt
+sed -i 's/:/\t/g' moderate_impact.pos.txt
+sed -i 's/:/\t/g' high_impact.pos.txt
 ```
 
 Create new vcf files with the variants we are interested in.
 ```bash
-ml bio/vcftools/0.1.16
-vcftools --vcf GuamRails_SNPs.recode.vcf --positions low_impact.pos.txt \
---recode --out GuamRail_low_impact
-vcftools --vcf GuamRails_SNPs.recode.vcf --positions moderate_impact.pos.txt \
---recode --out GuamRail_moderate_impact
-vcftools --vcf GuamRails_SNPs.recode.vcf --positions high_impact.pos.txt \
---recode --out GuamRail_high_impact
+module unload gcc/8.5.0  
+module load bio/vcftools/0.1.16
+vcftools --vcf GuamRails_ptg000009l_SNPs.recode.vcf --positions low_impact.pos.txt --recode --out GuamRail_low_impact
+vcftools --vcf GuamRails_ptg000009l_SNPs.recode.vcf --positions moderate_impact.pos.txt --recode --out GuamRail_moderate_impact
+vcftools --vcf GuamRails_ptg000009l_SNPs.recode.vcf --positions high_impact.pos.txt --recode --out GuamRail_high_impact
 ```
 
 ### 3. Analyze the alleles
@@ -156,12 +168,11 @@ There are a few different ways to figure this out (see further below*), but for 
 A very convenient tool to count allele types and plot results is the vcfR package in R. As this course is not focusing on R, I'll show how we can look at genotypes and count alleles using different unix tools and vcftools. For those interested in the vcfR code, it can be found at the bottom of this page**.
 
 #### a) Allele frequency spectrum
-A good way to see if our potentially deleterious sites are under more selective constraints than for example synonymous mutations, is to compare their allele frequency spectra. With only two individuals we only have four alleles to work with, but let's give it a try!
+A good method to see if our potentially deleterious sites are under more selective constraints than for example synonymous mutations, is to compare their allele frequency spectra. With only two individuals we only have four alleles to work with, but let's give it a try!
 
 ```bash
 # First we'll just look at the genotypes (remove everything else)
-grep -v "##" GuamRail_moderate_impact.recode.vcf | \
- awk '{out=$1"\t"$2; for(i=10; i<=11; i++){split($i,s,":"); out=out"\t"s[1]}; print out}' |less
+grep -v "##" GuamRail_moderate_impact.recode.vcf | awk '{out=$1"\t"$2; for(i=10; i<=11; i++){split($i,s,":"); out=out"\t"s[1]}; print out}' |less
 ```
 This is a good start to just get a feeling for the data.
 
@@ -173,8 +184,7 @@ echo "Type Number Ref_freq Alt_freq" |sed 's/ /\t/g' >SFS.txt
 for type in "low" "moderate" "high"
 do
   vcftools --vcf GuamRail_${type}_impact.recode.vcf --freq --out GuamRail_${type}_impact
-  tail -n+2 GuamRail_${type}_impact.frq  |cut -f5,6 |sed 's/:/\t/g' | \
-   cut -f2,4 |sort |uniq -c |awk -v t=$type -v OFS="\t" '{print t,$0}' >>SFS.txt
+  tail -n+2 GuamRail_${type}_impact.frq  |cut -f5,6 |sed 's/:/\t/g' | cut -f2,4 |sort |uniq -c |awk -v t=$type -v OFS="\t" '{print t,$0}' >>SFS.txt
 done
 # A lot of different unix tools here, including an awk script..
 # Make sure you know what each step does!
@@ -228,8 +238,7 @@ do
     ind=`grep "#CHR" GuamRail_${type}_impact.recode.vcf |cut -f $col`
     # Extract the genotypes and use awk to count the heterozygous and
     # homozygous as masked and realized respctively
-    grep -v "#" GuamRail_${type}_impact.recode.vcf |cut -f$col |cut -f1 -d":" | \
-     awk -v OFS="\t" -v t=$type -v i=$ind -v masked=0 -v realized=0 '{if($1=="0/1" || $1=="0|1"){masked++}else if($1=="1/1" || $1=="1|1"){realized++}}END{print t,i,"masked",masked,"\n"t,i,"realized",realized}' >>Load_table.txt
+    grep -v "#" GuamRail_${type}_impact.recode.vcf |cut -f$col |cut -f1 -d":" | awk -v OFS="\t" -v t=$type -v i=$ind -v masked=0 -v realized=0 '{if($1=="0/1" || $1=="0|1"){masked++}else if($1=="1/1" || $1=="1|1"){realized++}}END{print t,i,"masked",masked,"\n"t,i,"realized",realized}' >>Load_table.txt
   done
 done
 ```
