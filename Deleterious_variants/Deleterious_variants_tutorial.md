@@ -73,7 +73,7 @@ vcftools --vcf /data/genomics/workshops/smsc_2024/Deleterious/GuamRails_ptg00000
 ```
 
 ### 2. Run the variant predictor
-This code should be placed in a script and run as a job. It took around ~30 min using 8 cores.  If you already have your own copy of the assembly file you can use that. You can also make a softlink to the common fasta file using `ln -s originalfile yourfile`.
+This code should be placed in a script and run as a job. It took around ~30 min for the full genome using 8 cores. For this test chromosome it only took a couple of minutes. If you already have your own copy of the assembly file you can use that. You can also make a softlink to the common fasta file using `ln -s originalfile yourfile`.
 
 ```bash
 # Load ensembl module
