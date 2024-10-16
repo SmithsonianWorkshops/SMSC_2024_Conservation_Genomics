@@ -73,16 +73,16 @@ vcftools --vcf /data/genomics/workshops/smsc_2024/Deleterious/GuamRails_ptg00000
 ```
 
 ### 2. Run the variant predictor
-This code should be placed in a script and run as a job. It took around ~30 min for the full genome using 8 cores. For this test chromosome it only took a couple of minutes. If you already have your own copy of the assembly file you can use that. You can also make a softlink to the common fasta file using `ln -s originalfile yourfile`.
-
+This code should be placed in a script and run as a job. It took around ~30 min for the full genome using 8 cores. For this test chromosome it only took a couple of minutes. 
 ```bash
 # Load ensembl module
 module load bio/ensembl-vep
 # Run vep
 vep -i GuamRails_ptg000009l_SNPs.recode.vcf --fork 8 --offline --gff Guam_rail.withExons.gff.gz \
- --fasta bHypOws1_hifiasm.bp.p_ctg.fasta --cache /data/genomics/workshops/smsc_2024/VEP/ -o vep_rail.txt --species gallus_gallus_gca000002315v5 --force_overwrite
+ --fasta /data/genomics/workshops/smsc_2024/Guam_rail_assembly/bHypOws1_hifiasm.bp.p_ctg.fasta --cache /data/genomics/workshops/smsc_2024/VEP/ -o vep_rail.txt --species gallus_gallus_gca000002315v5 --force_overwrite
 #--fork 8 tells vep to use 8 cores - make sure to give it as many cores when you start the script.
 #--offline means we don't want to use the vep database but our own data
+#-- cache is the path to the VEP database (not used in our case)
 #--species gallus_gallus.. means... well, we know it's not a chicken, but without this flag
 # vep assumes a human genome, and giving it a custom name returned an error when I tested the code.
 ```
