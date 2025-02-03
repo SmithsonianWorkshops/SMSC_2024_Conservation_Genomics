@@ -1,96 +1,342 @@
-# Runs of homozygosity tutorial
+# ROHs
 
-Runs of Homozygosity (ROH) are defined as the uninterrupted stretches of homozygous genotypes within an individual's genome. These regions can provide valuable insights into the demographic history, inbreeding levels, and disease susceptibility of a population. By analyzing the length and distribution of ROH, we can infer the population structure, migration patterns, and effective population size of a group.
+Runs of Homozygosity are stretches of DNA where an individual inherits identical haplotypes from both parents. They often are a result of inbreeding, which can occur when closely related individuals mate. 
 
-Moreover, ROH can also be used to identify deleterious mutations and genomic regions under positive selection. Inbreeding depression, which is caused by the accumulation of deleterious alleles, can be estimated by measuring the frequency and length of ROH. Longer ROH segments are associated with increased homozygosity and reduced genetic diversity, which can lead to reduced fitness and increased risk of disease.
+We will use BCFtools roh to estimate Runs of Homozygosity
 
-In this tutorial, we will demonstrate how to estimate ROH using the 'bcftools roh' plugin, which is a widely used tool for detecting ROH from VCF files. We will also discuss the interpretation and application of ROH results in different research contexts, such as conservation genetics, human population genetics, and animal breeding. By the end of this tutorial, you will have a better understanding of the biological significance and practical utility of ROH analysis.
 
-Please see below the location of the VCF file that we will use for the tutorial.
+## Setting us up for analyses
 
-```r
-/pool/genomics/figueiroh/SMSC_2023_class/vcf/NN_6samples_HD_PASS_DP5.vcf.gz
+First, lets make a new directory for our analyses. 
+
+```
+mkdir /scratch/genomics/YOURNAME/smsc_2024/geneticdiversity/
+mkdir /home/YOURNAME/smsc_2024/day6
 ```
 
-For the RoHs plots, we are only interested in the “RG” portion of the files, where it contains the homozygous blocks in the genome. These blocks are important because they are indicative of long stretches of DNA that are identical in the two chromosomes, which can occur when the parents are related.
-
-There are several ways of showing the results, and it will mostly depend on your main question. For example, if you are interested in the frequency of RoHs in different populations, you can create histograms that show the distribution of the length of these blocks. On the other hand, if you want to study the relationship between RoHs and disease, you may want to compare the number and length of RoHs between cases and controls, and perform statistical tests to determine if there is an association. In either case, it is important to consider the study design and the underlying biological mechanisms that could affect the results.
-
-```bash
-module load bioinformatics/bcftools
-
-bcftools roh --AF-dflt 0.4 -I -G30 --rec-rate 1.4e-9 /pool/genomics/figueiroh/SMSC_2023/vcf/NN_6samples_HD_PASS_DP5.vcf.gz > /path/to/your/folder/NN_6samples_HD_PASS_DP5.roh.txt
+Next, we will copy all of the already written scripts into this folder so we can slightly alter it: 
+```
+cp /data/genomics/workshops/smsc_2024/scripts_Day6/*.job /home/YOURNAME/smsc_2024/day6
 ```
 
-- `bcftools roh`: This command runs the `roh` plugin from `bcftools` to detect runs of homozygosity.
-- `-AF-dflt 0.4`: This option sets the default allele frequency to 0.4 when the frequency is missing in the input file.
-- `I`: This option tells the plugin to perform the imputation of missing genotypes.
-- `G30`: This option sets the phred-scaled genotype quality threshold to 30. Genotypes below this quality threshold will be treated as missing.
-- `-rec-rate 1.4e-9`: This option sets the recombination rate to 1.4e-9.
 
-After running the 'bcftools roh' plugin, you may want to filter and process the output file to retain specific information. For example, you can extract the chromosome, start, and end positions of ROH using the following command:
+## Check depth of the bam files 
 
-```bash
-grep "RG" NN_6samples_HD_PASS_DP5.roh.txt | cut -f 2,3,6 > NN_6samples_HD_PASS_DP5.roh.edited.txt
+First, we need to check the average depth of our bam files. This is important, as to do an ROH analysis wth BCFtools, it requies genomes to be at least ~15x to confidently assess runs of homozygosity. 
+
+
+Fulica_atra
+
+
+```
+# /bin/sh                                                                                                                                                               
+# ----------------Parameters---------------------- #                                                                                                                    
+#$ -S /bin/sh                                                                                                                                                           
+#$ -pe mthread 5                                                                                                                                                        
+#$ -q lThM.q                                                                                                                                                            
+#$ -l mres=10G,h_data=5G,h_vmem=5G,himem                                                                                                                                
+#$ -cwd                                                                                                                                                                 
+#$ -j y                                                                                                                                                                 
+#$ -N checkdepth                                                                                                                                                        
+#$ -o checkdepth.log                                                                                                                                                    
+#                                                                                                                                                                       
+# ----------------Modules------------------------- #                                                                                                                    
+module unload gcc/8.5.0                                                                                                                                                 
+module load bio/samtools                                                                                                                                                
+#                                                                                                                                                                       
+# ----------------Your Commands------------------- #                                                                                                                    
+#                                                                                                                                                                       
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                           
+echo + NSLOTS = $NSLOTS                                                                                                                                                 
+#                                                                                                                                                                       
+#                                                                                                                                                                       
+BAM=/data/genomics/workshops/smsc_2024/BAMS/HOW_N23-0568.realigned.bam                                                 
+
+OUT=HOW_N23-0568_depth                                                                                           
+#                                                                                                 
+samtools depth ${BAM}  |  awk '{sum+=$3} END { print "Average = ",sum/NR}' > ${OUT}
+
+echo = `date` job $JOB_NAME done                                                                  
+#                                                                                                  
+#                                                                                           
+```
+This will take a couple minutes to run. 
+
+We can look at our per sample depth here: 
+```
+HOW_N23-0063 25.16
+HOW_N23-0068 22.2183
+Atlantisia_rogersi 19.52
+Fulica_atra 37.33
+Gallinula_chloropus 22.40
+Grus_americana 27.45
+Heliornis_fulica 4.43
+Hypotaenidia_okinawae 70.48 
+Laterallus_jamaicensis_coturniculus 11.28
+Porphyio_hochstetteri 12.81
+Rallus_limicola 15.01
+Zapornia_atra 0.14
+
+
 ```
 
-You can run this command on interactive mode. 
+## Subset and filter by individual 
 
-Two of the most basic statistics we can obtain from this analysis are the number of runs of homozygosity blocks (NROH) and the total length of genome that showed runs of homozygosity (SROH). These two values provide highly informative data, and the ratio between them is known as the inbreeding coefficient (FROH).
+Next we will subset and filter each individual by its specific depth. 
 
-You can use the following R script to estimate these values and plot the results.
+We alse only include SNPs that had a depth of more than one third and less than double of the average depth of coverage for each sample
 
-```r
-# Set the working directory
-setwd("/Users/henrique/Dropbox/Documentos/Pós-Doc/Smithsonian/SMSC_workshop/roh")
+So we will only keep samples that are over 15x: 
+```
+HOW_N23-0063 25.16 
+HOW_N23-0068 22.2183
+Atlantisia_rogersi 19.52
+Rallus_limicola 15.01
+```
 
-# Load libraries and read data
+Now we can run the code: 
+```
+# /bin/sh                                                                                                                                                               
+# ----------------Parameters---------------------- #                                                                                                                    
+#$ -S /bin/sh                                                                                                                                                           
+#$ -pe mthread 5                                                                                                                                                        
+#$ -q lThM.q                                                                                                                                                            
+#$ -l mres=10G,h_data=5G,h_vmem=5G,himem                                                                                                                                
+#$ -cwd                                                                                                                                                                 
+#$ -j y                                                                                                                                                                 
+#$ -N filterbyind                                                                                                                                                       
+#$ -o filter_indv.log                                                                                                                                                  
+#                                                                                                                                                                       
+# ----------------Modules------------------------- #                                                                                                                    
+module unload gcc/8.5.0                                                                                                                                                 
+module load bio/vcftools                                                                                                                                                
+#                                                                                                                                                                       
+# ----------------Your Commands------------------- #                                                                                                                    
+#                                                                                                                                                                       
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                           
+echo + NSLOTS = $NSLOTS                                                                                                                                                 
+#                                                                                                                                                                       
+#                                                                                                                                                                       
+VCF=/data/genomics/workshops/smsc_2024/VCF/gatk_allsamples_ptg000001l_filtered.recode.vcf                                                                               
+OUTDIR=/scratch/genomics/YOURNAME/smsc_2024/geneticdiversity/                                                                                                          
+#                                                                                                                                                                       
+NAME=GuamRail_HOW_N23_0063                                                                                                                                                    
+MAX=75.48                                                                                                                                                               
+MIND=12.58                                                                                                                                                              
+#                                                                                                                                                                       
+#                                                                                                                                                                       
+vcftools --vcf ${VCF} --minDP ${MIND} --maxDP ${MAX} --indv ${NAME} \                                                                                                   
+--min-alleles 2 --max-alleles 2 --max-missing 1 \                                                                                                                       
+--out ${OUTDIR}/gatk_allsamples_ptg000001l_filtered_min${MIND}_max${MAX}_${NAME} \                                                                                      
+--recode --recode-INFO-all                                                                                                                                              
+#                                                                                                                                                                       
+echo = `date` job $JOB_NAME done  
+```
+
+Let's look at the log file: 
+
+```
+less filter_indv.log
+```
+And then the output file: 
+```
+less -S /data/genomics/workshops/smsc_2024/VCF/gatk_allsamples_ptg000001l_filtered_min12.58_max75.48_GuamRail_HOW_N23_0063.recode.vcf
+```
+
+
+## Run BCFtools!
+
+BCFtools roh is a program that estimates ROH.  We will use it now to estimate ROHs in our samples. 
+
+```
+# /bin/sh                                                                                                                                                               
+# ----------------Parameters---------------------- #                                                                                                                    
+#$ -S /bin/sh                                                                                                                                                           
+#$ -pe mthread 5                                                                                                                                                        
+#$ -q lThM.q                                                                                                                                                            
+#$ -l mres=10G,h_data=5G,h_vmem=5G,himem                                                                                                                                
+#$ -cwd                                                                                                                                                                 
+#$ -j y                                                                                                                                                                 
+#$ -N bcftools                                                                                                                                                          
+#$ -o bcftools.log                                                                                                                                                      
+#                                                                                                                                                                       
+# ----------------Modules------------------------- #                                                                                                                    
+module load bio/bcftools/1.19                                                                                                                                           
+#                                                                                                                                                                       
+# ----------------Your Commands------------------- #                                                                                                                    
+#                                                                                                                                                                       
+echo + `date` job $JOB_NAME started in $QUEUE with jobID=$JOB_ID on $HOSTNAME                                                                                           
+echo + NSLOTS = $NSLOTS                                                                                                                                                 
+#                                                                                                                                                                       
+#                                                                                                                                                                       
+VCF=/data/genomics/workshops/smsc_2024/VCF/gatk_allsamples_ptg000001l_filtered_min12.58_max75.48_GuamRail_HOW_N23_0063.recode.vcf                                                                                                                                                                       
+#                                                                                                                                                                       
+bcftools roh -G30 --AF-dflt 0.4 ${VCF} -o GuamRail_HOW_N23_0063.txt            
+#                                                                                                                                                                       
+echo = `date` job $JOB_NAME done  
+```
+
+Here are some meanings to the filters: 
+
+- bcftools roh: This command runs the roh plugin from bcftools to detect runs of homozygosity.
+- AF-dflt 0.4: This option sets the default allele frequency to 0.4 when the frequency is missing in the input file.
+- G30: This option sets the phred-scaled genotype quality threshold to 30. Genotypes below this quality threshold will be treated as missing.
+
+
+Let's look at the output file, it should run fast. 
+
+```
+less GuamRail_HOW_N23_0063.txt 
+```
+
+We can see regions where there are no ROH, and then when there regions where there are with RG.  
+
+## Pull RG Flag 
+
+Next we will pull out the RG flag from our samples. 
+
+```
+grep "RG" GuamRail_HOW_N23_0063.txt > GuamRail_HOW_N23_0063_RG.txt
+```
+
+Let's just look at the number of ROHs in each sample we have here. 
+
+```
+less GuamRail_HOW_N23_0063_RG.txt
+```
+
+
+## Plot ROH in R
+```
+
+library (ggplot2)
 library(tidyverse)
-library(ggrepel)
+library(dplyr)
 
-# Read data with read_delim() for better control over input file parsing
-clouded_roh <- read_delim("NN_6samples_HD_PASS_DP5.roh.edited.txt", delim = "\t", skip = 1, col_names = c("Sample", "Chromosome", "RoH_length"))
+############################################
+### Plotting bar graph of ROH categories ###
+############################################
 
-# Compute NROH and SROH
-clouded_nroh <- clouded_roh %>% 
-  group_by(Sample) %>% 
-  summarize(NROH = n())
+#read in data
+dat_0.1 <- read.csv ("RunsofHomozygosity.csv", header=TRUE)
+nrow(dat_0.1)
+#7338
+##Remove ROH under 100kb (100kb=100,000bp)
+dat <- subset(dat, Length.bp. > 100000)
+nrow(dat)
+#472
 
-clouded_sroh <- clouded_roh %>% 
-  group_by(Sample) %>% 
-  summarize(SROH = sum(RoH_length))
+##################################################
+##################################################
+#Let's look at the number of ROH in each sample ## 
+##################################################
+##################################################
+dat_Atlantisia_rogersi <- subset(dat, Sample == "Atlantisia_rogersi")
+nrow(dat_Atlantisia_rogersi) 
+#183
+dat_GuamRail_HOW_N23_0063 <- subset(dat, Sample == "GuamRail_HOW_N23_0063")
+nrow(dat_GuamRail_HOW_N23_0063) 
+#61
+dat_GuamRail_HOW_N23_0068 <- subset(dat, Sample == "GuamRail_HOW_N23_0068")
+nrow(dat_GuamRail_HOW_N23_0068) 
+#127
+dat_Rallus_limicola <- subset(dat, Sample == "Rallus_limicola")
+nrow(dat_Rallus_limicola) 
+#101
 
-# Compute FROH
-clouded_froh <- inner_join(clouded_nroh, clouded_sroh, by = "Sample") %>% 
-  mutate(FROH = NROH / SROH)
+#Let's make a bar graph for length vs. number of ROH
 
-# Create a table with NROH, SROH, and FROH for each sample
-summary_table <- clouded_froh
+ROH_lengthvsnumber <- read.csv("ROH_lengthvsNumber.csv", header=TRUE)
 
-# Display the table
-print(summary_table)
+ ggplot(ROH_lengthvsnumber,aes(x=Total_length_ROH,y=NumberofROH,label=Sample, color=Sample)) + geom_point(size = 3) + theme_classic()
 
-# Save the table to a CSV file
-write_csv(summary_table, "summary_table.csv")
+#What different patterns do we see? 
 
-# Plot NROH vs. SROH and save the plot to a file
-froh_plot <- inner_join(clouded_nroh, clouded_sroh, by = "Sample") %>% 
-  ggplot(aes(x = SROH, y = NROH)) +
-  geom_point(size = 3) +
-  geom_text_repel(aes(label = Sample)) +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "NROH vs. SROH")
+######################################################
+######################################################
+### Let's make a graph of different lengths of ROH ###
+######################################################
+######################################################
 
-ggsave("froh_plot.png", froh_plot, width = 8, height = 6, dpi = 300)
+##################################
+# Get ROH values between 0.1-1Mb
+##################################
+dat_0.1_1Mb <- subset(dat, Length.bp. < 1000000)
+sum <- aggregate(dat_0.1_1Mb$Length.bp., by=list(Category=dat_0.1_1Mb$Sample), FUN=sum)
+sum
 
-# Create a boxplot of RoH lengths for each sample and save the plot to a file
-roh_boxplot <- clouded_roh %>% 
-  ggplot(aes(x = Sample, y = RoH_length)) +
-  geom_boxplot() +
-  theme_minimal() +
-  theme(plot.title = element_text(hjust = 0.5)) +
-  labs(title = "RoH Lengths per Sample")
+#               Category        x
+#1    Atlantisia_rogersi 42456648
+#2 GuamRail_HOW_N23_0063 13222867
+#3 GuamRail_HOW_N23_0068 28095326
+#4       Rallus_limicola 18974775
 
-ggsave("roh_boxplot.png", roh_boxplot, width = 8, height = 6, dpi = 300)
+write.csv (dat_0.1_1Mb , "samples_between_0.1_1mb.csv")
+##################################
+# Get ROH values between 1-5Mb
+##################################
+dat_1_10Mbtest <- subset(dat, Length.bp. > 1000000)
+dat_1_10Mb <- subset(dat_1_10Mbtest, Length.bp. < 5000000)
+sum_2_5Mb <- aggregate(dat_1_10Mb$Length.bp., by=list(Category=dat_1_10Mb$Sample), FUN=sum)
+sum_2_5Mb
+
+#               Category       x
+#1 GuamRail_HOW_N23_0063 5020811
+#2       Rallus_limicola 1055016
+
+
+##################################
+# Get ROH values between 5-10Mb
+##################################
+dat_10_100Mb <- subset(dat, Length.bp. > 5000000)
+dat_10_100Mbfinal <- subset(dat_10_100Mb, Length.bp. < 10000000)
+sum_5_10Mb <- aggregate(dat_10_100Mbfinal$Length.bp., by=list(Category=dat_10_100Mbfinal$Sample), FUN=sum)
+sum_5_10Mb
+
+#               Category        x
+#1 GuamRail_HOW_N23_0063 20835957
+
+##################################
+# Get ROH values between 10-100Mb
+##################################
+dat_10_100Mb <- subset(dat, Length.bp. > 10000000)
+dat_10_100Mbfinal <- subset(dat_10_100Mb, Length.bp. < 100000000)
+sum_10_100Mb <- aggregate(dat_10_100Mbfinal$Length.bp., by=list(Category=dat_10_100Mbfinal$Sample), FUN=sum)
+
+#no rows 
+
+######################
+#Plotting by category #
+######################
+
+datrohlength <-read.csv("ROH_byLength_Category.csv", header=TRUE)
+
+p <- ggplot(datrohlength, aes(fill=ROHcat, y=Length, x=reorder(Sample,-Totalsize ))) + 
+    geom_bar(position="stack", stat="identity", color="black") + theme_classic() + coord_flip() + scale_fill_manual(values = c( "#e6ab02", "#d95f02" ,"#7570b3")) + scale_x_discrete(labels=c("5.0e+08" = "0.5", "1.0e+09" = "1","1.5e+09" = "1.5"))+  theme(axis.text.x = element_text(color="black", size = 10), axis.text.y = element_text(color="black", size = 10))
+p
+
+
+
+
+######################################################
+######################################################
+############# Plot cummulative ROH ###################
+######################################################
+######################################################
+
+dat <- read.csv("RunsofHomozygosity_forcummulative_final.csv", header=TRUE)
+
+#Filter out ROH
+dat <- subset(dat, Length.bp. > 100000)
+dat <- subset(dat, Quality > 80)
+
+#Plotting
+p <- ggplot(dat, aes(x=Length.bp., y=Cummulative, color=Sample)) + theme_classic() + scale_x_log10()   +
+  geom_line(size=1.2, alpha=0.75) + scale_color_manual(values=c("orangered2", "mediumseagreen", "royalblue", "orange", "mediumseagreen" ))
+p
+q <- p + geom_line(aes(size = Bold))  +
+  scale_size_manual(values = c(0.1, 1.5))  
+q 
+
+
 ```
